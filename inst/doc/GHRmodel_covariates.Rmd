@@ -1,0 +1,745 @@
+---
+title: "Complex Covariate Structures in GHRmodel"
+output: 
+  rmarkdown::html_vignette:
+    toc: true
+vignette: >
+  %\VignetteIndexEntry{GHRmodel_covariates}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+bibliography: ../inst/GHRmodel_refs/GHRmodel_refs.bib
+csl: ../inst/GHRmodel_refs/apa.csl
+---
+
+<style>
+div.csl-bib-body {
+  font-size: 0.9em;         /* smaller font */
+}
+div.csl-entry {
+  margin-bottom: 0.6em;     /* add space between references */
+}
+</style>
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.align = "center",
+  warning = FALSE,
+  message = FALSE
+)
+
+options(rmarkdown.html_vignette.check_title = FALSE)
+```
+
+# Overview
+
+The *GHRmodel_covariates* vignette shows how to create INLA-compatible formulas for complex Bayesian spatio-temporal models (including interactions, varying and replicated effects). Models are then fitted using integrated nested Laplace approximations in R ([R-INLA](https://www.r-inla.org/home)) [@lindgren_explicit_2011]. 
+
+This vignette covers:
+
+* An overview of **GHRmodel** helper functions for creating INLA-ready model formulas.
+
+* Example 1: A worked example of model development, fitting, and evaluation using **GHRmodel** covariate helper functions.
+
+* Example 2: An example illustrating how to fit and evaluate models from user-specified INLA formulas.
+
+> 📝 **Note**: The examples in this vignette are designed to demonstrate package functionality and should not be interpreted as best-practice guidance for model selection.
+
+```{r GHRmodel_structure,fig.width=10, fig.height=10, fig.align='center', out.width='100%', echo= FALSE, fig.cap="**GHRmodel** functions to streamline INLA-compatible model formula development."}
+knitr::include_graphics("https://gitlab.earth.bsc.es/ghr/ghrmodel/-/raw/510e4737684359badce248d83a9113be8a3b976f/inst/images/GHRmodel_structure.png")
+```
+
+<br>
+Information regarding installation and a brief summary of the package methodology is included in the vignette *GHRmodel Overview*, which can be accessed by typing `vignette("GHRmodel_overview")`.
+
+
+## GHRmodel formula helper functions
+
+Model formulas in INLA follow a specific structure. The functions below streamline their construction by generating organized lists of INLA-compatible covariate terms.
+
+```{r cov function table, echo = FALSE}
+knitr::kable(
+  data.frame(
+    Function = c("`extract_names()`", "`cov_uni()`", "`cov_multi()`", "`cov_nl()`",  "`cov_interact()`", "`cov_varying()`"),
+    Purpose = c(
+      "Selects covariate names from a dataset",
+      "Prepares covariates for univariable INLA models",
+      "Generates combinations of covariates for multivariable models.",
+      "Convert covariates to nonlinear effect terms, with optional replication.",
+      "Creates interaction terms between 2 or 3 covariates (e.g., var1:var2).",
+      "Creates spatially or temporally varying effect terms using INLA's f() structure."
+    ),
+    `Input` = c(
+      "Data frame",
+      "Character vector",
+      "Character vector or a list of character vectors",
+      "Character vector or a list of character vectors",
+      "List of character vectors",
+      "Character vector or a list of character vectors"
+    ),
+    `Output` = c(
+      "Character vector",
+      "List of linear covariates",
+      "List with INLA nonlinear effect terms",
+      "List of multivariable covariate sets",
+      "List including interaction terms",
+      "List including spatially/temporally varying terms"
+    )
+  ),
+  format = "markdown",
+  caption = "Overview of helper functions to prepare covariate lists for INLA-compatible formulas."
+)
+
+```
+
+After extracting the potential covariate names from the dataset using `extract_names()`, functions with the prefix `cov_*` allow the user to generate lists of covariates to simplify building valid INLA formulas. These functions allow the user to include lagged, nonlinear or more complex covariate structures. Across all of these functions, a common structure is used:
+
+**Input**: For functions with the prefix `cov_*`, the input is a character vector and/or a list of character vectors representing covariate names specified in the `covariate` argument, with the exception of the  `extract_names()` function, which accepts a data frame as input. The table above summarizes the required input type for each function.
+
+**Covariate selection** is done using the arguments:
+
+* `pattern`: for partial string matching, selecting groups of covariates that share a common prefix (e.g., "tmin" would match "tmin.l1", "tmin.l2", etc.).
+
+* `name`: for exact matching of covariate names
+
+**Output**: is a list of covariates that may be combined or transformed, formatted for INLA formulas. The exception is the `extract_names()` function, where the output is a character vector. 
+
+* `add`: is a logical flag indicating whether to retain original covariates in addition to transformed or combined ones in the output.
+
+Moving forward, only arguments specific to each function will be described. 
+
+# 0. Prepare data 
+
+The example dataset contains monthly counts of notified dengue cases by microregion, along with a range of spatial and spatiotemporal covariates. This dataset represents a subset of a larger national dataset that covers the entire territory of Brazil. The subset focuses on a specific region, *Mato Grosso do Sul*, for the purposes of illustration and computational efficiency. The original full data set, which includes data from all Brazilian microregions, is available within this [GitHub repository](https://github.com/drrachellowe/hydromet_dengue) and in  [Zenodo](https://doi.org/10.5281/zenodo.4632205).
+
+## Load libraries
+
+```{r Load required libraries, eval=FALSE}
+# Load necessary package dependencies
+library(dplyr)        # Data manipulation
+library(tidyr)        # Data tidying
+library(tidyselect)   # Helpers for selecting variables programmatically
+library(rlang)        # Tools for tidy evaluation and non-standard evaluation in tidyverse code
+library(ggplot2)      # Data visualization: creating plots and graphs
+library(cowplot)      # Combining and arranging multiple ggplot2 plots into a single figure
+library(grDevices)    # Base R graphics device functions (e.g., color palettes, saving plots)
+library(RColorBrewer) # Predefined color palettes for plots
+library(colorspace)   # Advanced color space manipulation and palettes
+library(sf)           # Handling spatial vector data (simple features)
+library(spdep)        # Spatial dependence and autocorrelation analysis
+library(sn)           # Skew-normal and skew-t distributions (for modeling skewed data)
+library(INLA)         # Integrated Nested Laplace Approximation for Bayesian models
+library(GHRexplore)   # Exploratory analysis of health data
+
+# Load GHRmodel
+library(GHRmodel)     
+```
+
+```{r Load required libraries invisible, echo=FALSE}
+# Load necessary package dependencies
+library(dplyr)        # Data manipulation
+library(tidyr)        # Data tidying
+library(tidyselect)   # Helpers for selecting variables programmatically
+library(rlang)        # Tools for tidy evaluation and non-standard evaluation in tidyverse code
+library(ggplot2)      # Data visualization: creating plots and graphs
+library(cowplot)      # Combining and arranging multiple ggplot2 plots into a single figure
+library(grDevices)    # Base R graphics device functions (e.g., color palettes, saving plots)
+library(RColorBrewer) # Predefined color palettes for plots
+library(colorspace)   # Advanced color space manipulation and palettes
+library(sf)           # Handling spatial vector data (simple features)
+library(spdep)        # Spatial dependence and autocorrelation analysis
+library(sn)           # Skew-normal and skew-t distributions (for modeling skewed data)
+library(GHRexplore)   # Exploratory analysis of health data
+
+# Load GHRmodel
+library(GHRmodel)     
+```
+
+## Data pre-processing
+
+Create numeric ID variables for categorical features (such as year, month, or spatial units) that may be included as random effects, in line with R-INLA's requirements:
+
+```{r Process the data set }
+#Load data 
+data("dengue_MS")
+df <- dengue_MS
+
+# Create ID variables
+df <- df |>  
+  # Filter out the year 2000 
+  filter(year > 2000) |>  
+  # Create numeric IDs for year, month and various spatial units.
+  mutate(
+    year_id = as.numeric(as.factor(year)),                # year numeric ID
+    year_id2 = as.numeric(as.factor(year)),               # year second numeric ID
+    month_id = as.numeric(as.factor(month)),              # month numeric ID
+    spat_id = as.numeric(as.factor(micro_code)),          # microregion numeric ID
+    spat_meso_id = as.numeric(as.factor(meso_code)),      # meso-region numeric ID
+    main_climate_f = as.numeric(as.factor(main_climate))  # climate zone numeric ID
+  )
+
+```
+
+## Spatial data and graphs
+
+To perform spatial analysis, polygon geometries must be provided as an `sf` object. For the `dengue_MS` data set, the areal polygons are already included in the package in the `map_MS` object. In `map_MS`, the *code* variable corresponds to the *micro_code* area identifier in the `dengue_MS` object.
+
+```{r Load map_MS}
+# Load map included in package
+data("map_MS")
+
+# Create adjacency Matrix
+nb <- spdep::poly2nb(map_MS)
+g <- spdep::nb2mat(nb, style = "B")
+```
+
+## Pre-process covariates 
+
+## Lagged covariates
+
+Here, we use `lag_cov()` to generate lagged values for the variables *tmin* (monthly average daily minimum temperature averaged across each micro-region) and *pdsi* (Self-calibrated Palmer Drought Severity Index for each micro-region) across 1- to 6-month lags using the `lag_cov()` function.
+
+```{r lag_cov lags 1 to 6}
+data <- lag_cov(data = df,
+                name = c("tmin", "pdsi"),  # variables to lag 
+                time = "date",             # time variable 
+                lag = c(1:6),              # 1 to 6-month lags
+                group = "micro_code",      # identify spatial units with independent time series
+                add = TRUE)                # lagged variables appended to original data
+
+# Visualize lagged variables
+head(data[34:39])
+
+```
+
+## Define priors
+
+Bayesian models require priors to be assigned to parameters that the model will estimate. For more details regarding these prior choices, see *GHRmodel_overview*. For more details about priors in R-INLA, see [this book chapter](https://becarioprecario.bitbucket.io/inla-gitbook/ch-priors.html) [@gomez-rubio_bayesian_2020]. 
+
+The monthly and yearly random effects are assigned weakly informative Gamma priors on the precision with parameters `0.01` and `0.01` [@gomez-rubio_bayesian_2020]. 
+
+```{r Define monthly and yearly random effects priors}
+# Define Gamma priors for the precision of temporal random effects
+prior_t <- list(prec = list(prior = 'loggamma', param = c(0.01, 0.01))) 
+```
+
+The spatial random effect is specified using the BYM2 model, which facilitates assigning Penalized Complexity (PC) priors to its hyperparameters [@simpson_penalising_2017]. These priors are conservative and weakly informative, thus allowing the data to drive the inclusion of spatial structure [@moraga_geospatial_2019].
+
+```{r Define spatial random effect priors}
+# Define penalized complexity (PC) priors for spatial random effects using BYM2
+prior_sp <- list(
+  prec = list(prior = 'pc.prec', param = c(0.5 / 0.31, 0.01)),  # Precision of spatial effect
+  phi  = list(prior = 'pc', param = c(0.5, 2 / 3))              # Mixing parameter: structured vs unstructured
+)
+
+```
+
+# Example 1: GHRmodel helper functions
+
+## 1. Model development 
+In this example we demonstrate how to use **GHRmodel** helper functions to streamline writing INLA-compatible formulas. 
+
+
+### Select variables 
+
+Users can specify which variables from the data set to include as covariates using the `extract_names()` function. 
+ 
+Here we select lags 1 through 6 for *tmin* and *pdsi* as well as the *urban* (percentage of inhabitants living in urban areas) and *main_climate_f* (a factor defining the climate zone) variables.
+
+```{r Extracts variable names}
+# Extract variable names matching the specified patterns
+cov_names <- extract_names(data = data,
+                           pattern = c("tmin.",
+                                       "pdsi.", 
+                                       "urban",
+                                       "main_climate_f"))
+# Visualize output: character vector of covariate names
+glimpse(cov_names)
+```
+
+
+### Linear covariates 
+
+The `cov_uni()` function returns a list where each element contains a single covariate. This structure is suitable for fitting separate univariable models.
+
+```{r univariable models}
+
+# Generate list of single linear covariate names
+uni_cov_lin <- cov_uni(covariates = cov_names, # Input character vector of covariate names
+                       pattern = c("pdsi.l",  # Select lagged pdsi and tmin from the vector of covariate names
+                                    "tmin.l"))
+
+# Visualize output: list of single linear covariate names
+head(uni_cov_lin,2)
+```
+
+### Non-linear covariates 
+
+To include nonlinear covariates in the model, the `cov_nl()` function generates nonlinear effect terms compatible with the INLA formula structure. The nonlinear transformation is defined using three main arguments that are passed into `inla.group()`, which bins data into groups [@gomez-rubio_bayesian_2020]:
+
+* The type of nonlinear effect is controlled by the `model` argument, which supports `"rw1"` (random walk of order 1) or `"rw2"` (random walk of order 2), and defaults to `"rw2"`.
+
+* The `method` argument allows the user to specify how to discretize the linear covariate.  Accepted values are `"cut"` (equal-width intervals) and `"quantile"` (equal-width intervals in the probability space). The default is `"quantile"`.
+
+* The `n` argument sets the number of basis points (breaks) used to approximate the nonlinear effect and defaults to 10.
+
+> 💡 **Tip**: Choosing a low `n` will result in a smoother function (at the risk of underfitting) whereas a high `n` will lead into a more flexible function (at the risk of overfitting). Make sure to explore and plot your data and check goodness-of-fit metrics to get the best possible fit!
+
+> 📝 **Note**: In addition to `cov_nl`, **GHRmodel** provides the `onebasis_inla()` function for nonlinear covariate transformations. This function supports natural splines (`"ns"`), B-splines (`"bs"`), polynomial (`"poly"`), and other options from `dlnm::onebasis()`. For more information about one-basis terms see the *Complex Covariate Structures in GHRmodel* vignette by typing `vignette("GHRmodel_covariates")`. 
+
+Here we transform the 1- to 6-month lagged *tmin* and *pdsi* variables into nonlinear terms using a random walk of order 2 (default). We apply 10 breaks to discretize the covariates using `method = "quantile"`, which ensures each bin contains a similar number of observations. By setting `add = FALSE`, the resulting list only includes the transformed variables. 
+
+```{r Non linear univariable}
+
+# Generate list of single nonlinear covariate names
+uni_cov_nl <- cov_nl(covariates = cov_names, 
+                     method = "quantile",
+                     model = "rw2",
+                     pattern = c("pdsi", "tmin"), 
+                     n = 10,
+                     add =FALSE)
+
+# Visualize output: list of single nonlinear covariate names
+head(uni_cov_nl,2)
+```
+
+### Non-linear covariates replicated by group
+
+If the user wants to replicate the structure of a nonlinear effect across another variable (e.g., administrative unit), the name of the replicating variable should be specified in the `replicate` argument in `cov_nl()`. Using this argument, a separate smooth (nonlinear) function will be fitted for each level of the grouping variable, allowing the model to estimate distinct nonlinear effects of the covariate for each group level. 
+
+Here we transform the 1- to 6-month lagged *pdsi* variables into nonlinear terms using a random walk of order 2 replicated by the *main_climate_f* variable. This allows the model to estimate distinct nonlinear effects of *pdsi* for each climate zone, rather than assuming a single, pooled effect across all zones. By setting `add = TRUE`, the resulting list includes both the original linear terms and their corresponding nonlinear versions.
+
+```{r Replicated non linear univariable }
+# Generate list of replicated nonlinear covariate names
+uni_cov_nl_rep <- cov_nl(covariates = uni_cov_lin, 
+                          method = "quantile",
+                          pattern = c("pdsi"),
+                          n = 10, 
+                          replicate = "main_climate_f",
+                          add = TRUE)
+
+# Visualize output: list of replicated nonlinear covariate names
+head(uni_cov_nl_rep[13:14])
+```
+
+### Covariates for multivariate models
+
+The `cov_multi()` function takes a character vector or a list of character vectors (e.g., output from `cov_uni()` or `cov_nl()`) and generates all possible combinations. This is useful for constructing multivariable models where the user wishes to explore joint effects of different covariates. 
+
+Here we generate all two-way combinations of the nonlinear covariates containing "tmin" and "pdsi" listed in the `uni_cov_nl_rep` object where the lagged *pdsi* variables were transformed to nonlinear terms replicated by the *main_climate_f* variable while the lagged *tmin* variables remained linear. Therefore, the output of the `cov_multi()` is all possible combinations of replicated nonlinear lagged *pdsi* variables with linear lagged *tmin* variables: 
+
+```{r Combine linear and nonlinear replicated covariates}
+# Create a list of combined predictors, some non linear and replicated
+multi_cov_nl_rep <- cov_multi(covariates = uni_cov_nl_rep, 
+                              pattern =  c("pdsi","tmin"))
+
+# Visualize output: list of replicated nonlinear pdsi lagged terms combined with linear tmin lagged terms
+head(multi_cov_nl_rep[7:8])
+```
+
+### Add a covariate to all covariate lists
+
+The `cov_add()` function appends one or more covariate names to each set of covariates in a list. This is useful for stepwise inclusion of covariates in models or to create lists with covariate combinations. 
+
+Here we want to add the covariate *urban* to combinations of linear lagged *tmin* and *pdsi* covariates:
+
+First we generate a list of all combinations of the lagged linear *tmin* and *pdsi* covariates using `cov_multi()` :
+```{r multi_cov_lin}
+# Generate list of combinations of linear covariate names
+multi_cov_lin <- cov_multi(covariates = uni_cov_lin,
+                           pattern = c("pdsi","tmin"),
+                           add = FALSE)
+
+# Visualize output: list of combinations of linear covariate names
+head(multi_cov_lin,2)
+```
+
+Then we add the term *urban* to each element of the bivariate covariate list using `cov_add()`, 
+resulting in combinations of three covariates: lagged linear *tmin* and *pdsi* plus *urban*:
+
+```{r triple_cov_lin}
+# Add urban to each element of the bivariate covariate list 
+triple_cov_lin <- cov_add(covariates = multi_cov_lin,
+                          name = "urban")
+
+# Visualize output: list of combinations of 3 linear covariate names
+head(triple_cov_lin,2)
+```
+
+
+### Interacting covariates
+
+Interaction terms capture the additional effect of two (or more) covariates acting together on the outcome, beyond their individual contributions. For example, a recent dengue modeling study in Barbados found that a three-way interaction among long-lag dry conditions (6-month SPI lagged by 5 months), mid-lag hot conditions (3-month temperature anomaly lagged by 3 months), and short-lag wet conditions (6-month SPI lagged by 1 month) best predicted outbreak risk [@fletcher_compound_2025]. This result shows how drought, heat, and rainfall at different lags can cascade together, amplifying dengue outbreak likelihood.
+
+The function `cov_interact` creates interaction terms between selected linear covariates. It takes as input a list of covariate combinations (like the output from `cov_multi()`) and returns interaction terms formatted for use in INLA formulas. If two variables or patterns are selected, it generates all two-way interactions. If three are selected, it generates all pairwise and three-way interactions. **Currently GHRmodel only supports interactions between linear terms**.
+
+Here we generate all two-way and three-way interactions of lagged linear *tmin* and *pdsi* and *urban*. 
+
+We use the covariate list *triple_cov_lin* (created above using `cov_add()`) where each element consists of three linear covariates to produce two and three-way interactions
+
+```{r interacting_cov}
+# Create a list of interacting linear predictors
+interacting_cov <- cov_interact(covariates = triple_cov_lin,
+                                pattern = c("pdsi","tmin", "urban"))
+
+# Visualize output: list of interactions between linear pdsi terms and linear tmin terms
+head(interacting_cov, 2)
+```
+
+### Varying covariates
+
+The `cov_varying()` function generates spatially or temporally varying linear effect terms compatible with INLA formulas. It modifies covariate names to the INLA-compatible form `f(unit, covariate, model = "iid")`, where `unit` is the name of a grouping variable by which the covariate effect will vary (e.g., *spat_id* or *year_id*). 
+
+Here we use the `multi_cov_lin` object (created above) that contains combinations of lagged linear *tmin* and *pdsi* covariates. By setting `covariates = multi_cov_lin` and `pattern = "pdsi"` in the `cov_varying()` function, we modify only the lagged *pdsi* variables, to create varying *pdsi* effects (slopes) per climate zone (by the *main_climate_f* variable), while leaving the lagged *tmin* variables unchanged in linear form. The result is a set of covariate combinations pairing climate zone–specific lagged *pdsi* variables with linear lagged *tmin*:
+
+```{r Varying covariates}
+# Create a list of varying univariable predictors
+varying_cov <- cov_varying(covariates = multi_cov_lin,
+                            pattern = c("pdsi"),
+                            unit = "main_climate_f")
+
+# Visualize output: list of combinations of lagged pdsi varying by main_climate_f and linear tmin terms
+head(varying_cov,2)
+```
+
+
+### Varying vs. Replicated Effects in INLA
+
+**GHRmodel** supports distinct methods to model group-level heterogeneity depending on whether the covariate is linear or nonlinear: 
+
+**Varying effects** for linear covariates - use `cov_varying()` to produce `f(group, covariate, model = "iid")`: Different linear slopes across groups. Used when the effect (slope) of a linear covariate is different for each group, without assuming smoothness or shared structure. Think of it as a random slope model: each group gets its own coefficient for a covariate, and these are modeled as independent random effects.
+
+**Replicated effects** for nonlinear functions - use the `replicate` argument in `cov_nl()` to produce `f(INLA::inla.group(covariate,...), model= "rw2", replicate = group)`: Used when the same smooth (nonlinear) functional form (e.g. random walk order 2) is applied separately to different groups. Each level of the group gets its own smooth curve, but the curves share the same structure (e.g., same number of breaks and model), with separate coefficients. An example would be nonlinear functions of mean temperature that are independently repeated across climate zones. 
+
+
+```{r Varying vs. Replicated Effects in INLA table, echo = FALSE}
+knitr::kable(
+  data.frame(
+    Feature = c(
+      "Applied to",
+      "Purpose",
+      "INLA syntax",
+      "Structure assumption",
+      "Example use"
+    ),
+    `Varying Effect` = c(
+      "Linear terms",
+      "Group-specific linear slopes",
+      "`f(group, covariate, model = 'iid')`",
+      "Unstructured (`iid`)",
+      "Region-specific slopes of the linear effect of rainfall"
+    ),
+    `Replicate Effect` = c(
+      "Nonlinear terms",
+      "Group-specific nonlinear functions",
+      "`f(covariate, model = ..., replicate = group)`",
+      "Same structure (e.g., `rw2`), different curves",
+      "Region-specific nonlinear effect of rainfall"
+    )
+    ,
+    check.names = FALSE
+  ),
+  caption = "Comparison of Replicate and Varying Effects in INLA"
+)
+
+```
+
+
+### Write INLA-compatible model formulas
+
+The `write_inla_formulas()` function simplifies the creation of multiple INLA models by automatically structuring fixed effects, random effects, and interactions. 
+
+1. **Define covariate combinations** 
+
+Here we compile a list of covariate combinations previously generated using the `cov_*` family of functions. Each element in the list corresponds to a distinct model specification, enabling structured comparisons across modeling approaches.
+
+```{r List of covariate combinations }
+# Build a combined list of various transformations and combinations of pdsi.l1 
+cov_list <- c(
+  list(
+    uni_cov_lin[[1]],             # [1] pdsi.l1 (linear)
+    uni_cov_nl_rep[[13]],         # [2] pdsi.l1 (nonlinear replicated by 'main_climate_f')
+    multi_cov_lin[[1]],           # [3] pdsi.l1 (linear) + tmin.l1 (linear)
+    triple_cov_lin[[1]],          # [4] pdsi.l1 (linear) + tmin.l1 (linear) + urban (linear)
+    multi_cov_nl_rep[[7]],        # [5] pdsi.l1 (nonlinear replicated by 'main_climate_f') + tmin.l1 (linear)
+    interacting_cov[[1]],         # [6] pdsi.l1, tmin.l1, urban (linear main effects + 2-way & 3-way interactions) 
+    varying_cov[[1]]              # [7] pdsi.l1 (linear varying by 'main_climate_f') + tmin.l1 (linear)
+  ),  
+  uni_cov_nl[7:12]                # [8–13] pdsi.l1 through pdsi.l6 (nonlinear) 
+)
+
+
+```
+2. **Write model formulas from covariate list**
+
+Next, we transform this list of covariates into a vector of INLA-compatible formulas using the `write_inla_formulas()` function: 
+```{r formulas_cov_list}
+formulas_cov_list <- write_inla_formulas(
+  outcome = "dengue_cases",
+  covariates = cov_list,
+  re1 = list(id ="month_id",
+             model ="rw1", cyclic = TRUE,
+             hyper = "prior_t",
+             replicate = "spat_meso_id" ),
+  re2 = list(id = "year_id",
+             model = "iid",
+             hyper = "prior_t"),
+  re3 = list(id = "spat_id",
+             model = "bym2",
+             graph = "g", 
+             hyper = "prior_sp"),
+  baseline = TRUE)
+
+# Example of INLA formula generated
+formulas_cov_list[1]
+
+class(formulas_cov_list)
+```
+
+3. **Convert model formulas to a `GHRformulas` object**
+
+Finally, we use the `as_GHRformulas()` function to convert the output from `write_inla_formulas()` into a standardized `GHRformulas` object:
+
+```{r formulas_cov_list_ghr}
+formulas_cov_list_ghr <- as_GHRformulas(formulas = formulas_cov_list)
+
+class(formulas_cov_list_ghr)
+```
+
+
+## 2. Model fitting
+
+To evaluate the performance of multiple covariate model specifications using INLA, we can pass a list of predefined formulas as a `GHRformulas` object to `fit_models()`. After fitting, goodness-of-fit metrics can be extracted as a data frame directly through the `GHRmodels$mod_gof` element.
+
+This example demonstrates fitting a set of negative binomial models that include different combinations of covariates constructed using **GHRmodel** helper functions, with an offset term to account for population at risk. 
+
+```{r fit_models model_list, eval = FALSE}
+
+model_cov_list <- fit_models(
+  formulas = formulas_cov_list_ghr,
+  data = data,
+  family = "nbinomial",           # Negative binomial likelihood
+  name = "mod",                   # Label prefix for each model
+  offset = "population",          # Offset variable to account for population size
+  control_compute = list(
+    config = FALSE,               # Do not posterior predictive distribution
+    vcov = FALSE                  # Do not return variance-covariance matrix
+  ),
+  pb = TRUE,                      # Display progress bar
+  nthreads = 8                    # Use 8 threads for parallel computation
+)
+
+class(model_cov_list)
+
+model_cov_list_gof <- model_cov_list$mod_gof
+```
+
+
+```{r fit_models model_list readrds, echo = FALSE}
+model_cov_list <- readRDS(
+  system.file("examples", "model_cov_list.rds", package = "GHRmodel")
+)
+
+model_cov_list_gof <- model_cov_list$mod_gof
+```
+
+## 3. Model evaluation
+
+This section explains how to interpret the estimated coefficients from the complex covariate structures created above, including:
+
+ * **Interaction effects**
+ 
+ * **Varying effects** for linear covariates 
+ 
+ * **Replicated effects** for nonlinear functions
+
+Output plots return `ggplot2` or `cowplot` objects that can be further customized by the user. 
+
+For guidance on evaluating covariates fitted as linear or nonlinear terms, as well as other model assessment tools in the package, see the *GHRmodel_overview* vignette.
+
+### Interaction effects
+
+`plot_coef_lin()` can be used to evaluate interaction effects between linear covariates (the only interactions currently supported in **GHRmodel**).
+
+In this plot we observe that there is no significant effect of two or three-way interactions between *tmin.l1*, *pdsi.l1* and *urban* on dengue cases. 
+
+```{r plot interactions,  fig.width = 6, fig.height = 4}
+# Plot linear effects and their interactions
+plot_coef_lin(
+  model = model_cov_list,                      # A list of fitted INLA models
+  mod_id = c("mod2", "mod4", "mod5", "mod7"),  # Select models with linear effects to be plotted
+  # Custom labels for variables (applied only to non-interacting fixed effects)
+  var_label = c(
+    "tmin.l1" = "Min. temp lag 1",              # Rename 'tmin.l1' to a descriptive label
+    "pdsi.l1" = "PDSI lag 1",                   # Rename 'pdsi.l1' to a descriptive label
+    "urban"   = "Prop. urban population"        # Rename 'urban' to a descriptive label
+  ),
+  
+  title = "Effects of linear and interacting covariates"  
+  # Title for the plot summarizing what is being visualized
+)
+```
+
+
+### Varying linear coefficients
+
+The `plot_coef_varying()` function generates a forest plot that visualizes varying coefficients — often referred to as random slopes — from a fitted `GHRmodels` object. These varying coefficients reflect how the effect of a covariate differs across different groups (e.g., regions, time points, climate zones) and are structured as `f(group, covariate, model = "iid")` in INLA formulas. Users specify the model ID and the name of the varying coefficient (the covariate corresponding to `"group"` in the formula). Each estimate is plotted along the x-axis, while the corresponding group (often spatial or temporal) units are displayed along the y-axis. The function supports optional customization of unit labels, axis titles, color palettes, and plot title. 
+
+Here we show the four major Köppen-Geiger climate regimes, the letter code they were originally assigned in the data set (*main_climate*) and the numeric ID they were assigned during data processing (*main_climate_f*). The variable *main_climate_f*  was used to specify the varying effect:
+
+```{r Köppen-Geiger climate regimes, echo = FALSE}
+knitr::kable(
+  data.frame(
+    `main_climate_f` = c("1", "2", "3", "4"),
+    `main_climate` = c("AF", "AM", "AW", "CFA"),
+    Description = c(
+      "Tropical Rainforest Climate",
+      "Tropical Monsoon Climate",
+      "Tropical Savanna Climate with Dry Winter",
+      "Humid Subtropical Climate"
+    )
+  ),
+  col.names = c("main_climate_f", "main_climate", "Climate Zone Description"),
+  caption = "Main Köppen-Geiger Climate Regimes used in the varying coefficient analysis"
+)
+
+```
+
+This plot shows how a linear covariate (*pdsi.l1*) has different slopes (effects) depending on the climate zone. We observe that the 95% credible interval for the effect of PDSI at one month lag does not contain zero in humid subtropical climates. 
+
+<a name="varying-pdsi-plot"></a>
+```{r Varying coefficients,  fig.width = 8, fig.height = 3, out.width='100%'}
+# Plot linear slopes varying by climate zone. 
+plot_coef_varying(
+  models = model_cov_list, # A list of fitted INLA model objects
+  mod_id = "mod8",  # Select the model with varying slopes
+  palette = "Blues",   # Color palette for the plot (from RColorBrewer)
+  name = "main_climate_f", # The grouping variable (factor) 
+  title = "Effect of PDSI at one-month lag for each climate zone",  # Plot title
+  ylab = "Main climate zones",  # Label for the y-axis (groups/climate zones)
+  unit_label = c( # Map factor levels to descriptive names 
+    "1" = "Tropical Rainforest Climate", 
+    "2" = "Tropical Monsoon Climate", 
+    "3" = "Tropical Savanna Climate with Dry Winter",
+    "4" = "Humid Subtropical Climate"
+  )
+)
+```
+
+### Replicated nonlinear coefficients
+
+nonlinear covariates replicated by group can be evaluated with the `plot_coef_nl()` function. Replicated effects can only be displayed in grid mode (`collapse = FALSE`), which produces one plot per covariate–model combination, with effects in columns and models in rows. If only one model is provided and both `name` and `pattern` are left NULL, all nonlinear effects will be plotted automatically. When multiple models are specified in the `mod_id` argument, the user must explicitly choose which nonlinear covariates to plot by providing either `name` or `pattern`.
+
+Here we plot 2 models with replicated effects, the nonlinear term of PDSI at one-month lag replicated by climate zone, with and without an additional term for mean minimum temperature at one-month lag. We observe that the effect of wet conditions on dengue cases is strongest in regions *1* and *4*, that is Humid Subtropical Climate and Tropical Rainforest Climate, which aligns with the results obtained from structuring PDSI at 1 month lag as a linear effect with a varying slope by climate ([see plot above](#varying-pdsi-plot)). The effects of *pdsi.l1* do not change when a temperature covariate is added. 
+
+```{r plot_coef_nl grid replicated,  fig.width = 8, fig.height = 8, out.width='100%' }
+# PLot replicated nonlinear effects
+plot_coef_nl(
+  models = model_cov_list, # List of fitted INLA model objects
+  mod_id = c("mod3", "mod6"), # Select which models to include in the plot
+  mod_label = c( # Custom display labels for the selected models
+    "mod3" = "pdsi.l1_rep_clim",    
+    "mod6" = "pdsi.l1_rep_clim + tmin.l1"
+  ),
+  var_label = c( # Rename variables for clearer axis/legend labels
+    "pdsi.l1" = "PDSI lag 1"
+  ),
+  name = "pdsi.l1", # Variable to plot: nonlinear effect of pdsi.l1
+  title = "Nonlinear effect of PDSI at one-month lag replicated by main climate", 
+  xlab = "PDSI", # X-axis label
+  palette = "IDE2", # Color palette for plotting the nonlinear curves
+  collapse = FALSE, # Display results in a grid (one plot per covariate-model pair)
+  rug = FALSE,  # Do not show rug plot for data density along the x-axis
+  histogram = TRUE, # Show histogram of covariate distribution instead of rug plot
+  legend = "Climate zone" # Add legend title
+)
+```
+
+
+<br>
+
+
+# Example 2: INLA-compatible formulas 
+
+In some cases, users may wish to define their own INLA-compatible model formulas manually rather than generating them through **GHRmodel** helper functions. This approach offers full flexibility over the model structure, particularly when specifying complex fixed and random effects.  When constructing a custom set of models for comparison, it is recommended to place a baseline model (an intercept-only or random effect-only model) as the first entry in the list. This ensures compatibility with the automatic model comparison functionality in `fit_models()`, which uses the first model as the reference point for computing differences in goodness-of-fit metrics. In addition, all formulas are required to have the same random effect structure for compatibility with `as_GHRformulas()`. 
+
+## 1. Model development
+
+Below, we provide a user-defined vector of INLA-compatible model formulas and convert it into a standardized `GHRformulas` object using the `as_GHRformulas()` function. This object can then be passed to the `fit_models()` function for model fitting.
+
+```{r formulas_user_ghr} 
+# Convert list of user-defined INLA formulas into a GHRformulas object 
+formulas_user_ghr <- as_GHRformulas(c(
+  
+  # Model 1: random effects only, where monthly random effect is replicated by meso region and the spatial random effect is replicated by year
+    "dengue_cases ~ 1 +
+     f(month_id, model = 'rw1', replicate = spat_meso_id, cyclic = TRUE, constr = TRUE, hyper = prior_t) +
+     f(year_id, model = 'iid', constr = TRUE, hyper = prior_t) +
+     f(spat_id, model = 'bym2', graph = g, constr = TRUE, hyper = prior_sp, replicate = year_id2)",
+    
+  # Model 2: random effects and a varying effect for pdsi lag 1 by climate zone
+  "dengue_cases ~ 1 + f(main_climate_f, pdsi.l1, model = 'iid') +
+     f(month_id, model = 'rw1', replicate = spat_meso_id, cyclic = TRUE, constr = TRUE, hyper = prior_t) +
+     f(year_id, model = 'iid', constr = TRUE, hyper = prior_t) +
+     f(spat_id, model = 'bym2', graph = g, constr = TRUE, hyper = prior_sp, replicate = year_id2)",
+
+  # Model 3: random effects and a 3-way interaction between different pdsi and tmin lags
+  "dengue_cases ~ 1 + pdsi.l1 + tmin.l3 + pdsi.l6 + pdsi.l1:tmin.l3:pdsi.l6 +
+     f(month_id, model = 'rw1', replicate = spat_meso_id, cyclic = TRUE, constr = TRUE, hyper = prior_t) +
+     f(year_id, model = 'iid', constr = TRUE, hyper = prior_t) +
+     f(spat_id, model = 'bym2', graph = g, constr = TRUE, hyper = prior_sp, replicate = year_id2)"
+))
+
+# Visualize output: GHRformulas object
+class(formulas_user_ghr)
+```
+
+## 2. Model fitting
+
+Fit the user-defined model formulas:
+
+```{r fit_models model_user, eval = FALSE }
+# User-defined INLA-compatible formulas can be passed into fit_models() as a GHRformulas object
+model_user <- fit_models(
+  formulas = formulas_user_ghr,
+  data = data,
+  family = "nbinomial",           # Negative binomial likelihood
+  name = "mod",                   # Label prefix for each model
+  offset = "population",          # Offset variable to account for population size
+  control_compute = list(
+    config = FALSE,               # Do not posterior predictive distribution
+    vcov = FALSE                  # Do not return variance-covariance matrix
+  ),
+  pb = TRUE,                      # Display progress bar
+  nthreads = 8                    # Use 8 threads for parallel computation
+)
+```
+
+```{r fit_models model_user readrds, echo=FALSE}
+model_user<- readRDS(system.file("examples", "model_user.rds",
+                                 package = "GHRmodel"))
+
+model_user_gof <- model_user$mod_gof 
+```
+
+## 3. Model evaluation
+
+The *GHRmodel Overview* vignette describes the full set of functions available for model evaluation, which can be applied here to assess model performance.
+
+For example we can evaluate the effect of the linear coefficients using `plot_coef_lin()`:
+
+```{r plot user model,fig.width = 6, fig.height = 3}
+# Plot any linear coefficients found in the fitted model results. 
+plot_coef_lin(
+  model = model_user,              # Provide fitted model GHRmodels object
+  exp = TRUE,                      # Exponentiate coefficients to relative risk scale
+  title = "Relative Risk (RR)"     # Plot title
+)
+```
+
+# References
+
+
+
+
