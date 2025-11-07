@@ -1,10 +1,10 @@
 ---
-title: "Distributed Lag Nonlinear Models in GHRmodel"
+title: "Distributed Lag Nonlinear Models"
 output: 
   rmarkdown::html_vignette:
     toc: true
 vignette: >
-  %\VignetteIndexEntry{GHRmodel_DLNM}
+  %\VignetteIndexEntry{Distributed Lag Nonlinear Models in GHRmodel}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 bibliography: ../inst/GHRmodel_refs/GHRmodel_refs.bib
@@ -47,7 +47,7 @@ In this example, we demonstrate how to use **GHRmodel** to formulate, fit and ev
 
 The example dataset contains monthly counts of notified dengue cases by microregion, along with a range of spatial and spatiotemporal covariates. This dataset represents a subset of a larger national dataset that covers the entire territory of Brazil. The subset focuses on a specific region, *Mato Grosso do Sul*, for the purposes of illustration and computational efficiency. The original full data set, which includes data from all Brazilian microregions, is available within this [GitHub repository](https://github.com/drrachellowe/hydromet_dengue) and in  [Zenodo](https://doi.org/10.5281/zenodo.4632205).
 
-> 💡 **Tip**: The examples in this vignette are designed to demonstrate package functionality and should not be interpreted as best-practice guidance for model selection.
+> 📝 **Note**: The examples in this vignette are designed to demonstrate package functionality and should not be interpreted as best-practice guidance for model selection.
 
 ## 0. Prepare data 
 
@@ -275,6 +275,8 @@ prior_sp <- list(
 
 Here we construct a set of model formulas including DLNM terms using the `write_inla_formulas()` function. The resulting formulas are then standardized into a `GHRformulas` object for use with the `fit_models()` function.
 
+The one-basis and cross-basis matrices are referenced as character vectors, meaning that the corresponding objects must already exist in the R environment for the models to run correctly.
+
 ```{r Write DLNM INLA-compatible model formulas }
 # Write INLA-compatible model formulas including DLNM terms
 formulas_dlnm <- write_inla_formulas(
@@ -347,7 +349,7 @@ model_dlnm <- readRDS(system.file("examples", "model_dlnm.rds", package = "GHRmo
 
 To interpret DLNM model results, predictions over a range of exposure and lag values can be generated using the `crosspred_inla()` function. ` crosspred_inla()` extracts the relevant estimated coefficients and variance-covariance matrix from a `GHRmodels` object and passes them to the `dlnm::crosspred()` function to return a `GHRcrosspred` object that can be used to compute predictions and uncertainty intervals. It requires the fitted model to include a variance-covariance matrix (`vcov = TRUE` in `fit_models()`). The range of exposure values over which predictions are generated can be adjusted using the `from`, `to` and `at` arguments. 
 
-The `plot_coef_crosspred()` function provides flexible plotting options for visualizing DLNM results from a `GHRcrosspred` object. The output is a `ggplot2` object, allowing the user to further customize the output. It supports multiple plot types depending on the structure of the basis used (one-basis or cross-basis):
+The `plot_coef_crosspred()` function provides flexible plotting options for visualizing DLNM results from a `GHRcrosspred` object. The output is a `ggplot2` object, allowing the user to further customize the output. It supports multiple plot types:
 
 * `type = "overall"`: Plots the overall exposure-response relationship across all lags.
 
@@ -470,14 +472,13 @@ plot_coef_crosspred(
 Here we visualize the estimated relative risks using `type = "heatmap"` to examine how the association between temperature and dengue varies jointly across different temperature values and lag periods. The plot reveals that the most pronounced effects occur at a lag of approximately one month: higher minimum temperatures at this lag are associated with an increased risk of dengue, while lower temperatures, around the mean temperature, are linked to a decreased risk.
 
 ```{r Plot coefficients for cb_tmin heatmap, fig.width = 6, fig.height = 5}
-# Plot the predicted dengue risk values against the tmin values and lags
+# Plot the predicted dengue risk values summed across lags
 plot_coef_crosspred(
   crosspred = cpred_cb_tmin,  # Crosspred object containing model predictions
   type = "heatmap",           # Create a 2D heatmap of effects over exposure and lag values
   exp = TRUE,                 # Exponentiate effects to show relative risks
   palette = "-RdBu",          # Use the inverted "RdBu" color palette for the heatmap (blue for lower values)
-  title = "Effect of minimum temperature on dengue relative risk by lag",  # Main plot title
-  xlab = "Mean minimum temperature exposure",    # Label for the x-axis (exposure variable)
+  title = "Effect of minimum temperature on dengue relative risk by lag"  # Main plot title
 )
 
 ```
@@ -511,7 +512,7 @@ plot_coef_crosspred(
   n_lag_smooth = 200,         # Smooth across lag with 200 interpolation points
   palette = "-RdBu",          # Use the inverted "RdBu" color palette
   title = "Effect of minimum temperature on dengue relative risk by lag",  # Main plot title
-  xlab = "Mean minimum temperature exposure",    # Label for the x-axis (exposure variable)
+  ylab = "Mean minimum temperature exposure", # Label for the y-axis
 )
 ```
 <br> 

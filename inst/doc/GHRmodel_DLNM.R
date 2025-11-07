@@ -291,14 +291,13 @@ plot_coef_crosspred(
 )
 
 ## ----Plot coefficients for cb_tmin heatmap, fig.width = 6, fig.height = 5-----
-# Plot the predicted dengue risk values against the tmin values and lags
+# Plot the predicted dengue risk values summed across lags
 plot_coef_crosspred(
   crosspred = cpred_cb_tmin,  # Crosspred object containing model predictions
   type = "heatmap",           # Create a 2D heatmap of effects over exposure and lag values
   exp = TRUE,                 # Exponentiate effects to show relative risks
   palette = "-RdBu",          # Use the inverted "RdBu" color palette for the heatmap (blue for lower values)
-  title = "Effect of minimum temperature on dengue relative risk by lag",  # Main plot title
-  xlab = "Mean minimum temperature exposure",    # Label for the x-axis (exposure variable)
+  title = "Effect of minimum temperature on dengue relative risk by lag"  # Main plot title
 )
 
 
@@ -323,7 +322,7 @@ plot_coef_crosspred(
   n_lag_smooth = 200,         # Smooth across lag with 200 interpolation points
   palette = "-RdBu",          # Use the inverted "RdBu" color palette
   title = "Effect of minimum temperature on dengue relative risk by lag",  # Main plot title
-  xlab = "Mean minimum temperature exposure",    # Label for the x-axis (exposure variable)
+  ylab = "Mean minimum temperature exposure", # Label for the y-axis
 )
 
 ## ----Plot coefficients for cb_tmin overall, fig.width = 6, fig.height = 4-----

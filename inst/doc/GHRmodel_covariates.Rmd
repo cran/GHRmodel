@@ -1,10 +1,10 @@
 ---
-title: "Complex Covariate Structures in GHRmodel"
+title: "Complex Covariate Structures"
 output: 
   rmarkdown::html_vignette:
     toc: true
 vignette: >
-  %\VignetteIndexEntry{GHRmodel_covariates}
+  %\VignetteIndexEntry{Complex Covariate Structures in GHRmodel}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 bibliography: ../inst/GHRmodel_refs/GHRmodel_refs.bib

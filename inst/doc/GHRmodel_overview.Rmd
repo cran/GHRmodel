@@ -1,10 +1,10 @@
 ---
-title: "GHRmodel Overview"
+title: "GHRmodel overview"
 output: 
   rmarkdown::html_vignette:
     toc: true
 vignette: >
-  %\VignetteIndexEntry{GHRmodel_overview}
+  %\VignetteIndexEntry{GHRmodel overview}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 bibliography: ../inst/GHRmodel_refs/GHRmodel_refs.bib
@@ -627,11 +627,11 @@ The `fit_models()` function allows users to fit a set of INLA-compatible models 
 **Outputs**
 The function returns a `GHRmodels` object that includes:
 
-* `GHRmodels$fitted`: A list of fitted values (one element per model). If `config = TRUE`, these are derived from the posterior predictive distribution (PPD); otherwise, they are extracted from INLA's *summary.fitted.values*.
+* `GHRmodels$fitted`: A list of fitted values (one element per model). If `config = TRUE`, these are derived from the posterior predictive distribution (PPD); otherwise, they are extracted from INLA's `summary.fitted.values.`
 
 * `GHRmodels$formulas`, `GHRmodels$data`: Original formulas and dataset.
 
-* `GHRmodels$mod_gof`: A data frame with a comprehensive suite of goodness-of-fit Metrics (GoF) metrics. If `config = TRUE`, these are calculated using the posterior predictive distribution (PPD) when applicable; otherwise using INLA's `summary.fitted.values.` 
+* `GHRmodels$mod_gof`: A data frame with a comprehensive suite of goodness-of-fit metrics (GoF) metrics. If `config = TRUE`, these are calculated using the posterior predictive distribution (PPD) when applicable; otherwise using INLA's `summary.fitted.values.` 
 
 * **DIC**: Deviance Information Criterion.
 
@@ -860,9 +860,9 @@ plot_coef_lin(
 <br>
 **Non-linear coeficients**
 
-The `plot_coef_nl()` function generates plots of nonlinear effects from one or more fitted models contained within a `GHRmodels` object. It visualizes nonlinear covariates (typically created with `inla.group()`). Users can select non-linear terms to display by `name` or `pattern`, and customize labels, axes, and color palettes. The function supports two main display modes: 
+The `plot_coef_nl()` function generates plots of non-linear effects from one or more fitted models contained within a `GHRmodels` object. It visualizes nonlinear covariates (typically created with `inla.group()`). Users can select non-linear terms to display by `name` or `pattern`, and customize labels, axes, and color palettes. The function supports two main display modes: 
 
-* **Grid** (`collapse = FALSE`): one plot per covariate and model, with effects by column and models by row. If multiple models are specified in `mod_id`, the user must explicitly select which nonlinear covariates to plot using either `name` or `pattern`. If only one model is provided then all nonlinear effects will be plotted unless specific ones are selected in `name` or `pattern`. 
+* **Grid** (`collapse = FALSE`): one plot per covariate and model, with effects by column and models by row. If multiple models are specified in `mod_id`, the user must explicitly select which non-linear covariates to plot using either `name` or `pattern`. If only one model is provided then all non-linear effects will be plotted unless specific ones are selected in `name` or `pattern`. 
 
 * **Collapsed** (`collapse = TRUE`): one non-linear effect combined across models into a single panel. This display mode can only be used when the selected non-linear effect is not replicated across groups (e.g., random effects replicated by *meso_area*) using the `f(INLA::inla.group(covariate,...), model= "rw2", replicate = group)` format (for more information on replicated effects see `vignette("GHRmodel_covariates")`). 
 
@@ -978,7 +978,7 @@ model_list[["data"]] <- model_list[["data"]]|>
   dplyr::mutate(month_label = month.name[month_id]) 
 ```
 
-Each facet in the plot corresponds to a different mesoregion, and the plotted lines show the monthly random effects estimated by each model. The use of `re_id`, `rep_id`, and their associated label mappings (`re_label`, `rep_label`) ensures that both temporal and spatial structures are clearly presented. 
+Each facet in the plot corresponds to a different mesoregion, and the plotted points show the monthly random effects estimated by each model. The use of `re_id`, `rep_id`, and their associated label mappings (`re_label`, `rep_label`) ensures that both temporal and spatial structures are clearly presented. 
 
 This plot suggests that the covariates in all *mesoregions* explain a substantial portion of the seasonality (the monthly random effect values are closer to 0). 
 

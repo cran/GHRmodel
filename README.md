@@ -1,7 +1,10 @@
 # GHRmodel  <img src='inst/figures/logo_IDExtremes.jpg' align="right" width="18%" /> <span> <span> <img src='inst/figures/logo_BSC.png' align="right" width="16%" /> 
 
 <!-- badges: start -->
-[![License](http://img.shields.io/badge/license-GPL%20%28%3E=%202%29-brightgreen.svg?style=flat)](http://www.gnu.org/licenses/gpl-2.0.html)
+[![License](http://img.shields.io/badge/license-GPL%20%28%3E=%202%29-brightgreen.svg?style=flat)](https://www.gnu.org/licenses/old-licenses/gpl-2.0.html)
+[![CRAN status](https://www.r-pkg.org/badges/version/GHRmodel)](https://cran.r-project.org/package=GHRmodel)
+[![CRAN downloads total](https://cranlogs.r-pkg.org/badges/grand-total/GHRmodel)](https://cran.r-project.org/package=GHRmodel)
+[![CRAN downloads month](https://cranlogs.r-pkg.org/badges/GHRmodel)](https://cran.r-project.org/package=GHRmodel)
 <!-- badges: end -->
 
 <img src='inst/figures/GHRmodel.png' align="right" width="16%" />
@@ -47,9 +50,16 @@ library(devtools)
 devtools::install_git('https://earth.bsc.es/gitlab/ghr/ghrmodel.git')
 ```
 
-**GHRmodel** depends on the **INLA** package, which is not available on CRAN. Please
-follow the installation instructions on the [INLA website](https://www.r-inla.org/download-install) 
-before using **GHRmodel**.
+**GHRmodel** depends on the **INLA** package, which is not available on CRAN. 
+Instead, it must be installed from its own repository as follows:
+
+``` r
+ install.packages("INLA",repos=c(getOption("repos"),
+                  INLA="https://inla.r-inla-download.org/R/stable"), dep=TRUE) 
+```
+
+In case you run into any issues, please check the installation
+instructions on the [R-INLA website](https://www.r-inla.org/download-install).
 
 
 ## Usage
