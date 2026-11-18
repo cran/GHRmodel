@@ -15,9 +15,10 @@ lag_cov(data, name, time, lag, group = NULL, add = TRUE)
 \code{"date"}).}
 
 \item{lag}{A numeric vector of one or more positive integers. Each value is
-interpreted as a 'lag' (i.e. shift the series backward by \eqn{k} observations).}
+interpreted as a 'lag' (i.e. shift the series backward by \eqn{k}
+observations).}
 
-\item{group}{Optional character vector naming column(s) that define
+\item{group}{Optional character vector naming a column that define
 independent time-series (e.g. regions). If \code{NULL}, the whole data set
 is treated as one series.}
 
@@ -31,9 +32,10 @@ data plus the new lagged columns, or a numeric matrix of lagged values
 (when \code{add = FALSE}).
 }
 \description{
-This function creates lagged versions of one or more numeric or categorical variables
-in an equally spaced time-series data set. A single call can create multiple lags
-for each selected variable and, optionally, for each spatial/grouping unit.
+This function creates lagged versions of one or more numeric or categorical
+variables in an equally spaced time-series data set. A single call can
+create multiple lags for each selected variable and, optionally, for
+each spatial/grouping unit.
 }
 \examples{
 

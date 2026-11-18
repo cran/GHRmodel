@@ -8,66 +8,130 @@ fit_models(
   formulas,
   data,
   family,
-  name,
-  offset = NULL,
+  name = "mod",
+  offset_var = NULL,
   control_compute = list(config = FALSE, vcov = FALSE),
-  nthreads = 8,
-  pb = FALSE
+  control_inla = list(strategy = "adaptive"),
+  control_family = list(),
+  ppd_samples = 500,
+  keep_ppd = FALSE,
+  keep_inlamod = FALSE,
+  nthreads = 1,
+  progress = FALSE,
+  verbose = FALSE,
+  offset = NULL
 )
 }
 \arguments{
-\item{formulas}{A \code{GHRformulas} object containing multiple INLA model formulas.}
+\item{formulas}{Either a \code{GHRformulas} object containing multiple
+INLA model formulas, or a character vector of formulas (in this case,
+\code{as_GHRformulas()} will be executed internally).}
 
 \item{data}{A data frame containing the variables used in the model formulas.}
 
-\item{family}{A character string specifying the likelihood family
-(e.g., \code{"poisson"}, \code{"nbinomial"}, etc.).}
+\item{family}{A character string specifying the likelihood family. Currently
+available options include \code{"poisson"}, \code{"nbinomial"},
+\code{"gaussian"}, \code{"zeroinflatedpoisson0"}, and
+\code{"zeroinflatednbinomial0"}.}
 
-\item{name}{A character string to label each fitted model (e.g., \code{"mod"}).}
+\item{name}{Either a single character string to label each fitted model
+by attaching a count (e.g., \code{"mod"}) if there is more than one formula,
+or a character vector with the the same number of \code{"formulas"}.}
 
-\item{offset}{A character string specifying the name of the offset variable in \code{data}.
-If \code{NULL}, no offset is applied. Default is \code{NULL}.
-Internally, \code{log(offset_values)} is applied.}
+\item{offset_var}{A character string specifying the name of the offset
+variable in \code{data}. If \code{NULL} (default), no offset is applied.
+Internally, \code{offset_var} is transformed according to the link function
+of the corresponding family: identity for \code{"gaussian"} and log
+for the rest of families.}
 
-\item{control_compute}{A named list controlling additional computation options:
+\item{control_compute}{A named list controlling additional computation
+options passed to INLA's \code{control.compute}:
 \describe{
-\item{\code{config}}{Logical ; if \code{TRUE}, stores the Gaussian Markov Random Field (GMRF) and enables the
-computation of posterior predictive distribution (1,000 draws). Defaults to \code{FALSE}.}
-\item{\code{vcov}}{Logical if \code{TRUE}, returns  the variance-covariance
-(correlation) matrix of fixed effects. Defaults to \code{FALSE}.}
-}}
+\item{\code{config}}{Logical indicating whether to store extra internal
+configuration (e.g., enabling posterior predictive checks like CRPS).
+Defaults to \code{FALSE}.}
+\item{\code{vcov}}{Logical indicating whether to return the
+variance-covariance (correlation) matrix of fixed effects. Defaults to
+\code{FALSE}.}
+}
+Note that other elements of \code{control.compute} cannot be modified.}
 
-\item{nthreads}{An integer specifying the number of threads for parallel computation. Default is \code{8}.}
+\item{control_inla}{Parameters passed to \code{control.inla} in \code{INLA::inla}.
+See \code{?INLA::control.inla} to see all available options. By default, uses
+the adaptive strategy.}
 
-\item{pb}{Logical; if \code{TRUE}, displays a progress bar while fitting models. Default is \code{FALSE}.}
+\item{control_family}{Parameters passed to \code{control.family} in \code{INLA::inla}.
+See \code{?INLA::control.family} to see all available options.}
+
+\item{ppd_samples}{Numeric indicating the number of posterior predictive
+samples to draw. Only used if \code{config=TRUE}, defaults to 500.}
+
+\item{keep_ppd}{Default is FALSE (do not keep ppd). If TRUE (requires
+also \code{config=TRUE}), the posterior predictive distribution for all data
+samples is saved in the object, which can be useful for \code{plot_ppd()}.}
+
+\item{keep_inlamod}{Logical. Default is FALSE.
+If TRUE, the fitted INLA model objects are stored in the output list,
+which may result in a substantially larger object.}
+
+\item{nthreads}{An integer specifying the maximum number of threads for
+parallel computation. Default is \code{1}.}
+
+\item{progress}{Logical; if \code{TRUE}, displays progression while fitting
+models. Default is \code{FALSE}.}
+
+\item{verbose}{Logical; if \code{TRUE}, run INLA in verbose mode (useful
+for debugging). Default is \code{FALSE}.}
+
+\item{offset}{Deprecated, use offset_var instead.}
 }
 \value{
 An object of class \code{GHRmodels} containing:
 \describe{
 \item{\verb{$mod_gof}}{A data frame of model-specific goodness-of-fit metrics.}
 \item{\verb{$fitted}}{A list of fitted values (one element per model).
-If \code{config = TRUE}, these are derived from the posterior predictive distribution (PPD);
-otherwise, they are extracted from INLA's \code{summary.fitted.values}.}
-\item{\verb{$fixed}}{A list of summary tables for fixed effects (one element per model).}
-\item{\verb{$random}}{A list of summary tables for random effects (one element per model).}
+If \code{config = TRUE}, these are derived from the posterior predictive
+distribution (PPD); otherwise, they are extracted from INLA's
+\code{summary.fitted.values}.}
+\item{\verb{$fixed}}{A list of summary tables for fixed effects (one element
+per model).}
+\item{\verb{$random}}{A list of summary tables for random effects (one element
+per model).}
+\item{\verb{$vcov}}{A list of variance-covariance (correlation) matrices of
+fixed effects (one element per model). Populated only when
+\code{control_compute$vcov = TRUE}.}
 \item{\verb{$formulas}}{A character vector of the original model formulas used.}
-\item{\verb{$re}}{A character vector specifying any random effects defined in \code{formulas}.}
+\item{\verb{$re}}{A character vector specifying any random effects defined in
+\code{formulas}.}
 \item{\verb{$outcome}}{A character string indicating the outcome variable used.}
+\item{\verb{$family}}{A character string indicating the likelihood family used.}
 \item{\verb{$data}}{The original data frame passed to the function.}
+\item{\verb{$ppd}}{(if \code{keep_ppd=TRUE}) A list of ppd matrices where rows are
+observations in the same order as in \code{data} and columns are ppd samples.}
+\item{\verb{$inlamod}}{(if \code{keep_inlamod=TRUE}) A list of inla model objects.}
 }
 }
 \description{
-This function fits a set of \code{INLA} model formulas, provided in a \code{GHRformulas} object,
-to a specified dataset. For each fitted model, it extracts a range of outputs,
-including goodness-of-fit (GoF) metrics and other model outputs (fitted values, fixed effects, random effects).
+This function fits a set of \code{INLA} model formulas, provided in a
+\code{GHRformulas} object, to a specified dataset. For each fitted model,
+it extracts a range of outputs, including goodness-of-fit (GoF) metrics
+and other model outputs (fitted values, fixed effects, random effects).
 Results are extracted and stored in a \code{GHRmodels} object.
 }
 \details{
 This function iterates over each formula in the \code{GHRformulas} object
 and fits the corresponding \code{INLA} model using the internal function
-\code{.fit_single_model()}. For each fitted model, it extracts the fitted values,
-fixed effects, and random effects summaries. Then, it calculates a series of
-model evaluation metrics using the \code{.gof_single_model()} internal function.
+\code{.fit_single_model()}. For each fitted model, it extracts the fitted
+values, fixed effects, and random effects summaries. Then, it calculates a
+series of model evaluation metrics using the \code{.gof_single_model()}
+internal function.
+
+Because the first formula is used as the reference model for all
+comparison metrics (see Section B below), if it fails to fit,
+\code{fit_models()} stops and no results are returned for any model.
+However, if a formula after the first fit fails, a message is
+printed and that model is skipped (GoF row is filled with \code{NA}
+and object components are left empty).
 
 The goodness-of-fit (GoF) metrics are organized into two categories:
 
@@ -78,8 +142,8 @@ These are computed separately for each model:
 \item \strong{Deviance Information Criterion (DIC)}
 \deqn{DIC = \bar{D} + p_{D}}
 where \eqn{\bar{D}} is the posterior mean deviance and \eqn{p_{D}} is the
-effective number of parameters. Lower DIC values indicate a better model fit,
-balancing goodness-of-fit and model complexity.
+effective number of parameters. Lower DIC values indicate a better model
+fit, balancing goodness-of-fit and model complexity.
 \item \strong{Watanabe-Akaike Information Criterion (WAIC)}
 \deqn{WAIC = -2\left(\mathrm{lppd} - p_{\mathrm{WAIC}}\right)}
 WAIC evaluates predictive accuracy and penalizes model complexity through
@@ -87,62 +151,80 @@ the log pointwise predictive density (\eqn{\mathrm{lppd}}). Lower values
 imply better generalization.
 \item \strong{Log Mean Score (LMS)}
 \deqn{LMS = \frac{1}{n} \sum_{i=1}^n \left( -\log(\mathrm{CPO}_i) \right)}
-LMS assesses the average negative log-predictive density using Conditional Predictive
-Ordinates (CPO). Lower LMS values indicate stronger predictive performance by
-penalizing models that assign low probability to observed outcomes.
+LMS assesses the average negative log-predictive density using Conditional
+Predictive Ordinates (CPO). Lower LMS values indicate stronger predictive
+performance by penalizing models that assign low probability to observed
+outcomes.
 \item \strong{Mean Absolute Error (MAE)}
 \deqn{MAE = \frac{1}{n} \sum_{i=1}^n \left| y_i - \hat{y}_i \right|}
-Measures the average absolute deviation between observed values \eqn{y_i} and
-predicted values \eqn{\hat{y}_i}. Lower MAE values indicate improved fit.
-If \code{config = TRUE}, MAE is computed using the full posterior predictive distribution (PPD);
-otherwise, it uses point estimates from INLA's \code{summary.fitted.values}.
+Average absolute difference between observed and a point estimate of
+the predictions. As a point estimate, it uses the
+\code{summary.fitted.values} provided by INLA when \code{config = FALSE} and
+the mean of the ppd if \code{config = TRUE}.
+MAE is more robust to outliers than RMSE. Lower MAE values indicate
+improved model fit.
 \item \strong{Root Mean Squared Error (RMSE)}
 \deqn{RMSE = \sqrt{ \frac{1}{n} \sum_{i=1}^n (y_i - \hat{y}_i)^2 }}
-Captures average squared deviation between observed and predicted values.
-RMSE penalizes larger errors more heavily. Lower values reflect better model fit.
-If \code{config = TRUE}, RMSE uses the PPD; otherwise, it uses point estimates.
+Root average squared difference between observed and a point estimate of
+the predictions. As a point estimate, it uses the
+\code{summary.fitted.values} provided by INLA when \code{config = FALSE} and
+the mean of the ppd if \code{config = TRUE}.
+RMSE penalizes larger errors more heavily. Lower RMSE values reflect better
+model fit.
 \item \strong{Continuous Ranked Probability Score (CRPS)}
 \deqn{\mathrm{CRPS}(F, y) = \int_{-\infty}^{\infty} \left[F(t) - \mathbf{1}\{y \leq t\}\right]^2 dt}
-CRPS assesses how well the predictive cumulative distribution aligns with the observed outcome.
-Lower scores suggest better calibrated predictive distributions. Only available when \code{config = TRUE}.
+The intergral is approximated with the empirical CRPS (see \link{crps_empirical}):
+\deqn{\mathrm{CRPS} = \frac{1}{n} \sum_{i=1}^n |x_i - y| - \frac{1}{2n^2} \sum_{i=1}^n \sum_{j=1}^n |x_i - x_j|}
+CRPS assesses how well the entire posterior predictive distribution aligns
+with the observed outcome. The median CRPS across observations is
+returned. Lower scores suggest better calibrated predictive
+distributions. Only available when \code{config = TRUE}.
 }
 
 \strong{B) Model Comparison Metrics (relative to the first model)}
 
-The first model in the list is treated as the baseline for model comparisons. All other models
-are evaluated against it using the following metrics:
+The first model in the list is treated as the baseline for model comparisons.
+All other models are evaluated against it using the following metrics:
 \enumerate{
 \item \strong{Difference in DIC and WAIC}
-Stored as \code{dic_vs_first} and \code{waic_vs_first}. These represent how much higher (or lower)
-each model's DIC/WAIC is compared to the first model.
-Additionally, 95\% credible intervals for these differences are stored as
-\code{*_vs_first_lci} and \code{*_vs_first_uci}.
+Stored as \code{dic_vs_first} and \code{waic_vs_first}. These represent
+how much higher (or lower) each model's DIC/WAIC is compared to the first
+model. Additionally, 95\% credible intervals for these differences are
+stored as \code{*_vs_first_lci} and \code{*_vs_first_uci}.
 \item \strong{Difference in MAE and RMSE}
-Stored as \code{mae_vs_first} and \code{rmse_vs_first}. These reflect the absolute difference
-in prediction error compared to the first model. No credible intervals are computed for these metrics.
+Stored as \code{mae_vs_first} and \code{rmse_vs_first}. These reflect the
+absolute difference in prediction error compared to the first model. No
+credible intervals are computed for these metrics.
 \item \strong{Continuous Ranked Probability Score Skill Score (CRPSS)}
 \deqn{\mathrm{CRPSS} = 1 - \frac{\mathrm{CRPS}_{\text{model}}}{\mathrm{CRPS}_{\text{baseline}}}}
-Indicates how much better the predictive distribution of the current model is
-relative to the baseline model. Values closer to 1 indicate improvement; negative values
-imply worse performance. Available only when \code{config = TRUE}.
+Indicates how much better the predictive distribution of the current
+model is relative to the baseline model. Values closer to 1 indicate
+improvement; negative values imply worse performance. Available only
+when \code{config = TRUE}.
 \item \strong{Pseudo R-squared based on deviance}
 \deqn{R^2 = 1 - \exp\left( \frac{-2}{n} \left( \frac{dev_{\text{model}}}{-2} - \frac{dev_{\text{base}}}{-2} \right) \right)}
-Captures relative deviance reduction compared to the baseline model. Values range from 0
-(no improvement) to 1 (strong improvement).
+Captures relative deviance reduction compared to the baseline model.
+Values range from 0 (no improvement) to 1 (strong improvement).
 \item \strong{Random Effect Variance}
 \deqn{\mathrm{Var}_{re} = \frac{1}{\mathrm{precision}}}
-Quantifies residual variance due to group- or cluster-level effects. Computed only when
-random effects are defined in the model formula.
+Quantifies residual variance due to group- or cluster-level effects.
+Computed only when random effects are defined in the model formula.
 \item \strong{Proportional Change in Random Effect Variance}
 \deqn{\frac{\mathrm{Var}_{re}}{\mathrm{Var}_{re}^{(1)}} - 1}
-Represents the relative change in group-level variance compared to the baseline model.
-Helps assess how much variance is explained by added covariates.
+Represents the relative change in group-level variance compared to
+the baseline model. Helps assess how much variance is explained by
+added covariates. \code{re1_var_change} refers to the change in specific
+random effects (ordered by number) whereas \code{re_meanchange} is the
+mean change across all random effects. \code{re_meanchange} is \code{NA}
+when no random effects are defined or if the
+variance change of any individual random effect is \code{NA}.
 }
 }
 \examples{
 \donttest{
 # Load example dataset
-data(dengueMS)
+data(dengue_MS)
+dengue_MS <- dengue_MS[dengue_MS$year \%in\% 2010:2012, ]
 
 # Declare formulas
 formulas <- c(
@@ -150,19 +232,15 @@ formulas <- c(
   "dengue_cases ~ pdsi +  f(year, model='rw1')"
 )
 
-# Tranform formulas into a 'GHRformulas' object
-ghr_formulas <- as_GHRformulas(formulas)
-
-# Fit multiple models 
+# Fit multiple models
 results <- fit_models(
-  formulas = ghr_formulas,
-  data     = dengue_MS,
-  family   = "nbinomial",
-  name     = "TestModel",
-  offset   = "population",
+  formulas = formulas,
+  data = dengue_MS,
+  family = "nbinomial",
+  name = "TestModel",
+  offset_var = "pop100000",
   nthreads = 2,
-  control_compute = list(config = FALSE),
-  pb       = TRUE
+  progress = TRUE
 )
 
 # Inspect goodness-of-fit metrics
@@ -171,5 +249,6 @@ results$mod_gof
 
 }
 \seealso{
-\code{\link{as_GHRformulas}} converts a set of R-INLA-compatible formulas into a \code{GHRformulas} object.
+\code{\link{as_GHRformulas}} converts a set of R-INLA-compatible formulas
+into a \code{GHRformulas} object.
 }

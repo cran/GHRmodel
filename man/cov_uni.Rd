@@ -7,20 +7,24 @@
 cov_uni(covariates = NULL, pattern = NULL, name = NULL)
 }
 \arguments{
-\item{covariates}{A character vector of covariate names. Typically the output from \code{\link{extract_names}}.}
+\item{covariates}{A character vector of covariate names. Typically the output
+from \code{\link{extract_names}}.}
 
-\item{pattern}{A character vector specifying the prefix pattern(s) to match (e.g., "tmin" matches "tmin", "tmin.l1", etc.).}
+\item{pattern}{A character vector specifying the prefix pattern(s) to match
+(e.g., "tmin" matches "tmin", "tmin.l1", etc.).}
 
 \item{name}{A character vector specifying exact variable name(s) to extract.}
 }
 \value{
-A list of character vectors, each of length 1, containing the matched covariate name.
-The resulting list is suitable for use as the \code{covariates} argument in \code{\link{write_inla_formulas}}.
+A list of character vectors, each of length 1, containing the matched
+covariate name. The resulting list is suitable for use as the \code{covariates}
+argument in \code{\link{write_inla_formulas}}.
 }
 \description{
-This function returns a list where each element contains a single covariate, based on
-covariates specified in the \code{pattern} or \code{name} arguments. This structure is
-suitable for generating separate univariable model formulas using \code{\link{write_inla_formulas}}.
+This function returns a list where each element contains a single covariate,
+based on covariates specified in the \code{pattern} or \code{name} arguments. This
+structure is suitable for generating separate univariable model formulas
+using \code{\link{write_inla_formulas}}.
 }
 \examples{
 data <- data.frame(tmin = rnorm(10), tmin.l1 = rnorm(10), urban = rnorm(10))

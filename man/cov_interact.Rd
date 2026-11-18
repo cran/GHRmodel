@@ -7,37 +7,48 @@
 cov_interact(covariates = NULL, pattern = NULL, name = NULL, add = FALSE)
 }
 \arguments{
-\item{covariates}{A list of character vectors, each vector containing variable names.
-Typically an output of \code{\link{cov_multi}} or \code{\link{cov_uni}}.}
+\item{covariates}{A list of character vectors, each vector containing
+variable names. Typically an output of \code{\link{cov_multi}} or
+\code{\link{cov_uni}}.}
 
-\item{pattern}{A character vector of length 2 or 3 specifying prefixes of variables to interact
-(e.g., "tmin" matches "tmin", "tmin.l1", etc.).}
+\item{pattern}{A character vector of length 2 or 3 specifying prefixes of
+variables to interact (e.g., "tmin" matches "tmin", "tmin.l1", etc.).}
 
-\item{name}{A character vector specifying the exact variable names to be included in the interactions.}
+\item{name}{A character vector specifying the exact variable names to be
+included in the interactions.}
 
-\item{add}{Logical; if \code{TRUE}, appends the newly created formulas to the original list. Default is \code{FALSE}.}
+\item{add}{Logical; if \code{TRUE}, appends the newly created formulas to the
+original list. Default is \code{FALSE}.}
 }
 \value{
-A list of character vectors, where each vector includes covariates and their corresponding
-interaction terms. This object can be passed to the \code{covariates} argument in \code{\link{write_inla_formulas}}.
+A list of character vectors, where each vector includes covariates
+and their corresponding interaction terms. This object can be passed to the
+\code{covariates} argument in \code{\link{write_inla_formulas}}.
 }
 \description{
-This function generates interaction terms between covariates specified in the \code{pattern} or \code{name} arguments.
-It requires a list of character vectors and appends interaction terms to each vector
-based on pairwise or three-way interactions. The resulting list
-can be input into the \code{covariates} argument in \code{\link{write_inla_formulas}}.
+This function generates interaction terms between covariates specified in
+the \code{pattern} or \code{name} arguments. It requires a list of character vectors
+and appends interaction terms to each vector based on pairwise or
+three-way interactions. More-way interactions are not supported and will be
+ignored. The resulting list can be input into the
+\code{covariates} argument in \code{\link{write_inla_formulas}}.
 }
 \details{
 \itemize{
-\item If two variables are matched, their pairwise interaction is added (\code{var1:var2}).
-\item If three variables are matched, two-way and three-way interactions are generated.
-\item Only variables that are expressed as linear terms can be used in interactions.
-\item Use either \code{pattern}, \code{name}, or both to identify variables for interaction.
+\item If two variables are matched, their pairwise interaction is added
+(\code{var1:var2}).
+\item If three variables are matched, two-way and three-way interactions are
+generated.
+\item Only variables that are expressed as linear terms can be used in
+interactions.
+\item Use either \code{pattern}, \code{name}, or both to identify variables for
+interaction.
 }
 }
 \examples{
 # Example dataset
-data <- data.frame(tmin.l1 = rnorm(10), pdsi.l1 = rnorm(10), urban = rnorm(10))
+data <- data.frame(tmin.l1 = rnorm(10), pdsi.l1 = rnorm(10),
+                   urban = rnorm(10))
 
 # Extract names
 covs <- extract_names(data, pattern = c("tmin", "pdsi", "urban"))

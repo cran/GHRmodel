@@ -10,7 +10,7 @@ plot_re(
   re_id,
   rep_id = NULL,
   map = NULL,
-  map_area = NULL,
+  map_unit = NULL,
   mod_label = NULL,
   re_label = NULL,
   rep_label = NULL,
@@ -26,31 +26,42 @@ plot_re(
 )
 }
 \arguments{
-\item{models}{A \code{GHRmodels} object containing fitted models and random effects.}
+\item{models}{A \code{GHRmodels} object containing fitted models and
+random effects.}
 
-\item{mod_id}{Character vector of model IDs to plot (must match entries in \code{models$mod_gof$model_id}).}
+\item{mod_id}{Character vector of model IDs to plot (must match entries in
+\code{models$mod_gof$model_id}).}
 
-\item{re_id}{Character; name of the variable defining the random effect (from \code{models$re}).}
+\item{re_id}{Character; name of the variable defining the random effect
+(from \code{models$re}).}
 
-\item{rep_id}{Optional character string; name of a grouping variable if random effects are replicated.
-Default is \code{NULL}.}
+\item{rep_id}{Optional character string; name of a grouping variable if
+random effects are replicated. Default is \code{NULL}.}
 
-\item{map}{Optional \code{sf} object providing spatial geometry. If \code{NULL}, returns a caterpillar plot.}
+\item{map}{Optional \code{sf} object providing spatial geometry. If
+\code{NULL}, returns a caterpillar plot.}
 
-\item{map_area}{Character; column name in \code{map} indicating spatial units (must match \code{re_id} order).}
+\item{map_unit}{Character; column name in \code{map} indicating spatial
+units (must match \code{re_id} order).}
 
-\item{mod_label}{Optional labels for models. Can be a named vector (e.g., \code{c("mod1" = "Baseline", "mod2" = "Adjusted")})
-or an unnamed vector with the same order as \code{mod_id}.}
+\item{mod_label}{Optional labels for models. Can be a named vector
+(e.g., \code{c("mod1" = "Baseline", "mod2" = "Adjusted")}) or an
+unnamed vector with the same order as \code{mod_id}.}
 
-\item{re_label}{Optional; variable in the data to label the random effect units (e.g., year names instead of numeric IDs).}
+\item{re_label}{Optional; variable in the data to label the random
+effect units (e.g., year names instead of numeric IDs).}
 
-\item{rep_label}{Optional; label for replicated grouping variable (e.g., for years or time periods).}
+\item{rep_label}{Optional; label for replicated grouping variable
+(e.g., for years or time periods).}
 
-\item{ref_color}{Color used for the reference model. If specified, this will apply to the first model in \code{mod_id}.}
+\item{ref_color}{Color used for the reference model. If specified, this
+will apply to the first model in \code{mod_id}.}
 
-\item{palette}{Character; name of the color palette to use. Defaults to \code{"IDE1"} for maps and \code{"IDE2"} otherwise.}
+\item{palette}{Character; name of the color palette to use. Defaults to
+\code{"IDE1"} for maps and \code{"IDE2"} otherwise.}
 
-\item{var_arrange}{Character; how to arrange REs on the x-axis. Options: \code{"median"} or \code{"ID"}. Default is \code{"ID"}.}
+\item{var_arrange}{Character; how to arrange REs on the x-axis. Options:
+\code{"median"} or \code{"ID"}. Default is \code{"ID"}.}
 
 \item{title}{Title for the plot.}
 
@@ -58,63 +69,77 @@ or an unnamed vector with the same order as \code{mod_id}.}
 
 \item{ylab}{Label for the y-axis. Default is \code{"Effect Size"}.}
 
-\item{legend}{Label for the legend in map plots. Default is \code{"Effect Size"}.}
+\item{legend}{Label for the legend in map plots. Default is
+\code{"Effect Size"}.}
 
-\item{centering}{Value at which to center the color scale for map plots. Default is \code{0}.}
+\item{centering}{Value at which to center the color scale for map plots.
+Default is \code{0}.}
 
-\item{exp}{Logical; if \code{TRUE}, exponentiates the effects (useful for log-scale models). Default is \code{FALSE}.}
+\item{exp}{Logical; if \code{TRUE}, exponentiates the effects (useful
+for log-scale models). Default is \code{FALSE}.}
 }
 \value{
 A \code{ggplot2} plot object:
 \itemize{
-\item If \code{map} is \code{NULL}, returns a caterpillar plot showing median REs with 95\% uncertainty intervals.
-\item If \code{map} is provided, returns a faceted choropleth map showing RE medians by area and (optionally) replicate.
+\item If \code{map} is \code{NULL}, returns a caterpillar plot
+showing median REs with 95\% uncertainty intervals.
+\item If \code{map} is provided, returns a faceted choropleth map showing
+RE medians by spatial unit and (optionally) replicate.
 }
 }
 \description{
-Generates plots of random effects from one or more fitted models contained within a \code{GHRmodels} object.
-The function supports two main display modes:
+Generates plots of random effects from one or more fitted models contained
+within a \code{GHRmodels} object.  The function supports two main display modes:
 \itemize{
 \item Caterpillar plot of effect sizes with uncertainty intervals (the default).
-\item Choropleth map (when a spatial map (\code{sf} object) is provided in the \code{map} argument).
+\item Choropleth map (when a spatial map (\code{sf} object) is provided in the
+\code{map} argument).
 }
 
-It also supports visualization of replicated or grouped effects via the \code{rep_id} argument.
+It also supports visualization of replicated or grouped effects via the
+\code{rep_id} argument.
 }
 \details{
 Plot Random Effects from GHRmodels
 
 \itemize{
-\item If \code{map} is used, \code{map_area} must match a column in \code{map} and correspond in order to the RE unit.
-\item For BYM/BYM2 models, only the total random effect is plotted (structured/unstructured parts are merged).
-\item When no map is used, the plot compares models via colored points and intervals for each RE unit.
-\item Replicated REs (e.g., for years) can be plotted across facets using \code{rep_label}.
-\item Model comparison is visually aided using distinct colors; the first model in \code{mod_id} is the reference.
+\item If \code{map} is used, \code{map_unit} must match a column in
+\code{map} and correspond in order to the RE unit.
+\item For BYM/BYM2 models, only the total random effect is plotted
+(structured/unstructured parts are merged).
+\item When no map is used, the plot compares models via colored points
+and intervals for each RE unit.
+\item Replicated REs (e.g., for years) can be plotted across facets
+using \code{rep_label}.
+\item Model comparison is visually aided using distinct colors; the first
+model in \code{mod_id} is the reference.
 }
 }
 \examples{
 \donttest{
-# Load example GHRmodels object from the package: 
-model_list_file <- system.file("examples", "model_list.rds", package = "GHRmodel")
+# Load example GHRmodels object from the package:
+model_list_file <- system.file("examples", "model_list.rds",
+                               package = "GHRmodel")
 model_list <- readRDS(model_list_file)
 
 #  Plot the estimated yearly random effects for three different models.
 plot_re(
-  model = model_list,                          # A GHRmodels object 
-  mod_id = c("mod1", "mod3", "mod5"),          # IDs of the models 
+  model = model_list,                          # A GHRmodels object
+  mod_id = c("mod1", "mod3", "mod5"),          # IDs of the models
   mod_label = c("Baseline",                    # Custom labels for the models
-                "tmin.l1_nl",           
-                "pdsi.l1_nl + tmin.l1_nl"),     
-  re_id = "year_id",                           # Name of the random effect variable 
-  re_label = "year",                           # Label to map year_id to calendar years
-  ref_color = "grey",                          # Color for the reference model’s effects
-  palette = "IDE2",                            # Color for other model effects
+                "tmin.l1_nl",
+                "pdsi.l1_nl + tmin.l1_nl"),
+  re_id = "year_id",  # Name of the random effect variable
+  re_label = "year",  # Label to map year_id to calendar years
+  ref_color = "grey", # Color for the reference model’s effects
+  palette = "IDE2",   # Color for other model effects
   title = "Yearly Random Effect",              # Title for the plot
-  xlab = "Year"                                # Label for the x-axis 
+  xlab = "Year"                                # Label for the x-axis
 )
 }
 
 }
 \seealso{
-\code{\link{fit_models}} for model fitting; \code{\link{as_GHRformulas}} for formula setup.
+\code{\link{fit_models}} for model fitting; \code{\link{as_GHRformulas}}
+for formula setup.
 }

@@ -7,27 +7,29 @@
 onebasis_inla(covariate, fun, basis_name, ...)
 }
 \arguments{
-\item{covariate}{A numeric vector representing the covariate}
+\item{covariate}{A numeric vector representing the covariate.}
 
 \item{fun}{A character string specifying the shape function to be used by
 \code{\link[dlnm]{onebasis}}.}
 
-\item{basis_name}{A character string giving a base name for the columns in the
-resulting basis matrix. The default prefix (usually \code{"b"}) is replaced by this string.}
+\item{basis_name}{A character string giving a base name for the columns in
+the resulting basis matrix. The default prefix \code{"b"} produced by
+\code{dlnm} is replaced by this string.}
 
-\item{...}{Additional arguments passed to \code{\link[dlnm]{onebasis}}, such as
-\code{degree}, \code{df}, \code{knots}, etc.}
+\item{...}{Additional arguments passed to \code{\link[dlnm]{onebasis}},
+such as \code{degree}, \code{df}, \code{knots}, etc.}
 }
 \value{
-An object of class \code{"onebasis"}, as returned by \code{\link[dlnm]{onebasis}},
-with column names modified according to \code{basis_name}.
+An object of class \code{"onebasis"}, as returned by
+\code{\link[dlnm]{onebasis}}, with column names modified according to
+\code{basis_name}.
 }
 \description{
 This function is a wrapper around \link[dlnm]{onebasis} to
 create a one-dimensional basis for spline modeling. This wrapper enhances the
 original function by allowing users to specify a custom prefix for the column
-names using the \code{basis_name} argument, such that each set of basis variables can
-be easily identified in the model formula by the \pkg{INLA} framework.
+names using the \code{basis_name} argument, such that each set of basis variables
+can be easily identified in the model formula by the \pkg{INLA} framework.
 }
 \examples{
 

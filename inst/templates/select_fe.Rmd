@@ -1,0 +1,347 @@
+---
+title: "Fixed effects model selection"
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    toc: true
+    toc_float: 
+      collapsed: false
+    number_sections: true
+    theme: cosmo
+params:
+  results: NULL
+---
+
+<style>
+.main-container {
+  max-width: 1600px !important;
+}
+
+body {
+  margin-left: 20px;
+  margin-right: 20px;
+}
+</style>
+
+```{r setup, include=FALSE}
+# Options
+knitr::opts_chunk$set(echo = FALSE,
+                      fig.align = "center",
+                      fig.height = 5,
+                      fig.width = 10,
+                      out.width = "100%",
+                      warning = FALSE,
+                      message = FALSE)
+options(knitr.kable.NA = "")
+```
+
+```{r prep, include=FALSE}
+# Plot theme shared by the fitted plots
+fit_theme <- ggplot2::theme(
+  axis.text = ggplot2::element_text(size = 7),
+  legend.position = "bottom"
+)
+
+# Formats a named list such as `roll_mean`/`roll_sum`/`lag`/`nl` (e.g.
+# list(tmax = c(1, 3))) as a compact bullet-friendly string
+fmt_named_list <- function(x) {
+  if (is.null(x) || length(x) == 0) {
+    return("none")
+  }
+  vals <- vapply(x, paste, character(1), collapse = ", ")
+  paste(sprintf("`%s` = %s", names(x), vals), collapse = "; ")
+}
+
+# Anchored, literal patterns to attribute a model term to a covariate
+cov_lin_pattern <- function(cov) paste0("^", stringr::str_escape(cov), "\\.")
+cov_nl_pattern <- function(cov) {
+  paste0("^INLA::inla\\.group\\(", stringr::str_escape(cov), "\\.")
+}
+
+# Objects
+results <- params$results
+unit_var <- results$params$unit
+time_var <- results$params$time
+metrics <- results$params$metric
+# Preserve the covariates' original input order; fall back to the (alpha-
+# betically sorted) GoF table for results saved before 'params$covariates'
+# was added
+covariates <- results$params$covariates
+if (is.null(covariates)) {
+  covariates <- unique(results$fe_uni_gof$covariate)
+}
+
+if (!is.null(unit_var)) {
+  unit_n <- length(unique(results$data[[unit_var]]))
+} else {
+  unit_n <- 0
+}
+```
+
+Two-stage fixed effect model selection procedure:
+
+- **Best configuration**: Fits, ranks and selects univariable fixed effect
+models by covariate (rolling averages, lags, non-linear) according to
+goodness of fit metrics.
+- **Best combination**: Generates, fits, and ranks multivariable
+combinations of the selected univariable fixed effects.
+
+The **random effects structure** for all models is: 
+
+```{r, results='asis'}
+cat(paste0("- ", results$params$re_form, collapse = "\n"))
+```
+
+The **covariate(s)** included in the analysis:
+
+```{r, results='asis'}
+cat(paste0("- ", covariates, collapse = "\n"))
+```
+
+The settings used for all models:
+
+```{r, results='asis'}
+p <- results$params
+offset_txt <- if (is.null(p$offset_var)) {
+  "none"
+} else {
+  paste0("`", p$offset_var, "`")
+}
+standardize_txt <- if (is.null(p$standardize) || identical(p$standardize, "")) {
+  "none"
+} else {
+  paste(paste0("`", p$standardize, "`"), collapse = ", ")
+}
+cat(paste0(
+  "- **Outcome**: `", p$outcome, "`\n",
+  "- **Family**: `", p$family, "`\n",
+  "- **Offset**: ", offset_txt, "\n",
+  "- **Ranking metric(s)**: ",
+  paste(paste0("`", p$metric, "`"), collapse = ", "), "\n",
+  "- **Rolling means**: ", fmt_named_list(p$roll_mean), "\n",
+  "- **Rolling sums**: ", fmt_named_list(p$roll_sum), "\n",
+  "- **Lags**: ", fmt_named_list(p$lag), "\n",
+  "- **Non-linear terms**: ", fmt_named_list(p$nl), "\n",
+  "- **Standardized covariates**: ", standardize_txt, "\n"
+))
+```
+
+Please see the documentation of the function `select_fe()` for more information.
+
+
+# Best configuration
+
+```{r setup-uni-mods}
+# Prepare univariable results
+uni_gof <- results$fe_uni_gof
+
+# Prepare univariable table
+tab_uni <- uni_gof[
+  c("covariate", "model_id",
+    "type", "roll", "lag", "covariate_1", metrics, "final_rank")
+] |>
+  dplyr::rename(alias = covariate_1)
+uni_selected <- results$fe_uni_selected
+uni_selected <- unlist(lapply(uni_selected, names))
+tab_uni$selected <- tab_uni$model_id %in% uni_selected
+```
+
+```{r uni-mods, results='asis'}
+for (cov in covariates) {
+
+  cat("##", cov, "{.tabset}\n\n")
+
+  # Gof table
+  cat("### Model table {.unnumbered}\n\n")
+  tab_cov <- tab_uni[tab_uni$covariate %in% cov, ]
+  print(knitr::kable(tab_cov, row.names = FALSE))
+  cat("\n\n")
+
+  cat("### Fitted (selected) {.unnumbered}\n\n")
+  # Predicted vs. fitted
+  cat(knitr::knit_child(
+    text = paste0(
+      "```{r, fig.width=9, out.width='100%', fig.height=4+floor(unit_n/4)}\n",
+      "plot_fit(",
+      "  results$fe_uni_mod,",
+      "  mod_id = tab_cov$model_id[tab_cov$selected],",
+      "  time = time_var,",
+      "  unit = unit_var,",
+      "  palette = 'Set1',",
+      "  transform = 'log10p1') + \n",
+      "fit_theme\n",
+      "```\n"
+    ),
+    envir = environment(),
+    quiet = TRUE
+  ))
+  cat("\n\n")
+
+  cat("### Fitted (all) {.unnumbered}\n\n")
+  # Predicted vs. fitted
+  cat(knitr::knit_child(
+    text = paste0(
+      "```{r, fig.width=9, out.width='100%', fig.height=4+floor(unit_n/4)+floor(nrow(tab_cov)/5)*0.25}\n",
+      "plot_fit(",
+      "  results$fe_uni_mod,",
+      "  mod_id = tab_cov$model_id,",
+      "  time = time_var,",
+      "  unit = unit_var,",
+      "  palette = 'Set1',",
+      "  transform = 'log10p1') + \n",
+      "fit_theme\n",
+      "```\n"
+    ),
+    envir = environment(),
+    quiet = TRUE
+  ))
+  cat("\n\n")
+
+  # Linear
+  cat("### Linear effects {.unnumbered}\n\n")
+  cat(knitr::knit_child(
+    text = paste0(
+      "```{r, fig.width=9, out.width='90%'}\n",
+      "plot_coef_lin(\n",
+      "  results$fe_uni_mod,\n",
+      "  pattern = cov_lin_pattern(cov))\n",
+      "```\n"
+    ),
+    envir = environment(),
+    quiet = TRUE
+  ))
+  cat("\n\n")
+
+  # Non-linear
+  if (any(grepl("Non-linear", tab_cov$type))) {
+
+    cat("### Non-linear effects {.unnumbered}\n\n")
+
+    cat(knitr::knit_child(
+      text = paste0(
+        "```{r, fig.height=2, fig.width=8, out.width='70%'}\n",
+        "mods_nl <- tab_cov$model_id[grepl('Non-linear', tab_cov$type)]\n",
+        "for (mnl in mods_nl) {",
+        "print(plot_coef_nl(results$fe_uni_mod,\n",
+        "  mod_id = mnl,\n",
+        "  pattern = cov_nl_pattern(cov)))\n",
+        "}\n",
+        "```\n"
+      ),
+      envir = environment(),
+      quiet = TRUE
+    ))
+  }
+  cat("\n\n")
+}
+```
+
+# Best combination
+
+```{r setup-multi-mods}
+# Prepare multivariable results
+multi_gof <- results$fe_multi_gof
+
+# Prepare multivariable table: take the actual 'covariate_*' columns present
+# rather than assuming there are length(covariates) of them
+covariate_cols <- grep("^covariate_", names(multi_gof), value = TRUE)
+tab_multi <- multi_gof[
+  c("model_id", covariate_cols, metrics, "final_rank")
+]
+multi_selected <- names(results$fe_multi_selected)
+tab_multi$selected <- tab_multi$model_id %in% multi_selected
+```
+
+## Summary{.tabset}
+
+### Model table{.unnumbered}
+```{r multi-gof}
+knitr::kable(tab_multi, row.names = FALSE)
+```
+
+### Fitted (selected){.unnumbered}
+```{r multi-fit1, fig.height=4+floor(unit_n/4)}
+plot_fit(
+  results$fe_multi_mod,
+  time = time_var,
+  mod_id = tab_multi$model_id[tab_multi$selected],
+  unit = unit_var,
+  palette = "Set1",
+  transform = "log10p1"
+) +
+  fit_theme
+```
+
+### Fitted (all){.unnumbered}
+```{r multi-fit2, fig.height=4+floor(unit_n/4)+floor(nrow(tab_multi)/5)*0.25}
+plot_fit(
+  results$fe_multi_mod,
+  time = time_var,
+  mod_id = tab_multi$model_id,
+  unit = unit_var,
+  palette = "Set1",
+  transform = "log10p1"
+) +
+  fit_theme
+```
+```{r multi, results='asis'}
+# Only the covariate_* columns hold model terms; the metric/id columns must
+# not be searched
+covariate_cols <- names(tab_multi)[startsWith(names(tab_multi), "covariate_")]
+cov_terms <- tab_multi[, covariate_cols, drop = FALSE]
+
+for (cov in covariates) {
+
+  cat("\n\n")
+  cat("##", cov, " effects{.tabset}\n\n")
+
+  lin_re <- cov_lin_pattern(cov)
+  matches_cov <- apply(cov_terms, 1, function(row) any(grepl(lin_re, row)))
+  matches_nl <- apply(cov_terms, 1, function(row) {
+    any(grepl("_nl_", row, fixed = TRUE) & grepl(lin_re, row))
+  })
+  n_lin <- sum(matches_cov & !matches_nl)
+  n_nl <- sum(matches_nl)
+
+  if (n_lin > 0) {
+    cat("### Linear effects {.unnumbered}\n\n")
+    cat(knitr::knit_child(
+      text = paste0(
+        "```{r, fig.width=9, out.width='90%'}\n",
+        "plot_coef_lin(\n",
+        "  results$fe_multi_mod,\n",
+        "  pattern = cov_lin_pattern(cov))\n",
+        "```\n"
+      ),
+      envir = environment(),
+      quiet = TRUE
+    ))
+    cat("\n\n")
+  }
+
+  if (n_nl > 0) {
+    mods_nl <- tab_multi$model_id[matches_nl]
+    cat("### Non-linear effects {.unnumbered}\n\n")
+    cat(knitr::knit_child(
+      text = paste0(
+        "```{r, fig.height=2, fig.width=8, out.width='70%'}\n",
+        "for (modnl in mods_nl) {\n",
+        "print(plot_coef_nl(results$fe_multi_mod,\n",
+        "  mod_id = modnl,\n",
+        "  pattern = cov_nl_pattern(cov)))\n",
+        "}\n",
+        "```\n"
+      ),
+      envir = environment(),
+      quiet = TRUE
+    ))
+  }
+}
+```
+
+# Final model
+
+The model with the best results is the following:
+
+* **Random effects**: `r results$params$re_form` 
+* **Fixed effects**: `r results$best` 

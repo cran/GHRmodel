@@ -1,12 +1,12 @@
 Package: GHRmodel
 Title: Bayesian Hierarchical Modelling of Spatio-Temporal Health Data
-Version: 0.1.1
+Version: 0.2.0
 Authors@R: c(
-    person("Carles", "Milà", , "carles.milagarcia@bsc.es", 
-    role = c("aut", "cre"),
-           comment = c(ORCID = "0000-0003-0470-0760")),
     person("Giovenale", "Moirano", role = "aut",
            comment = c(ORCID = "0000-0001-8748-3321")),
+    person("Carles", "Milà", , "carles.milagarcia@bsc.es", 
+           role = c("aut", "cre"),
+           comment = c(ORCID = "0000-0003-0470-0760")),
     person("Anna B.", "Kawiecki", role = "aut",
            comment = c(ORCID = "0000-0002-0499-2612")),
     person("Rachel", "Lowe", role = "aut",
@@ -22,10 +22,10 @@ Description: Supports modeling health outcomes using Bayesian hierarchical
 License: GPL (>= 2)
 URL: https://gitlab.earth.bsc.es/ghr/ghrmodel,
         https://bsc-es.github.io/GHRtools/docs/GHRmodel/GHRmodel
-BugReports: https://gitlab.earth.bsc.es/ghr/ghrmodel/-/issues
+BugReports: https://gitlab.earth.bsc.es/ghr/ghrmodel/-/work_items
 Depends: R (>= 4.1.0)
-Imports: cowplot, dlnm, dplyr, ggplot2 (>= 3.5.0), GHRexplore, rlang,
-        scales, tidyr, tidyselect
+Imports: cowplot, dlnm, dplyr, ggplot2 (>= 3.5.0), GHRexplore (>=
+        0.3.0), rlang, scales, tidyr, tidyselect, zoo, stringr, VGAM
 Suggests: INLA, sf, sn, RColorBrewer, colorspace, testthat (>= 3.0.0),
         spdep, knitr, rmarkdown
 Additional_repositories: https://inla.r-inla-download.org/R/stable
@@ -33,14 +33,14 @@ Config/testthat/edition: 3
 Encoding: UTF-8
 LazyData: true
 VignetteBuilder: knitr
-RoxygenNote: 7.3.3
+Config/roxygen2/version: 8.1.1
 NeedsCompilation: no
-Packaged: 2025-11-07 15:15:37 UTC; cmilagar
-Author: Carles Milà [aut, cre] (ORCID: <https://orcid.org/0000-0003-0470-0760>),
-  Giovenale Moirano [aut] (ORCID:
+Packaged: 2026-11-17 14:38:22 UTC; cmilagar
+Author: Giovenale Moirano [aut] (ORCID:
     <https://orcid.org/0000-0001-8748-3321>),
+  Carles Milà [aut, cre] (ORCID: <https://orcid.org/0000-0003-0470-0760>),
   Anna B. Kawiecki [aut] (ORCID: <https://orcid.org/0000-0002-0499-2612>),
   Rachel Lowe [aut] (ORCID: <https://orcid.org/0000-0003-3939-7343>)
 Maintainer: Carles Milà <carles.milagarcia@bsc.es>
 Repository: CRAN
-Date/Publication: 2025-11-07 15:50:25 UTC
+Date/Publication: 2026-11-18 10:10:21 UTC

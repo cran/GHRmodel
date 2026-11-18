@@ -7,27 +7,34 @@
 cov_multi(covariates, pattern = NULL, name = NULL, add = FALSE)
 }
 \arguments{
-\item{covariates}{A character vector or a list of single-element character vectors. Typically
-obtained from \code{\link{extract_names}} or \code{\link{cov_uni}} or \code{\link{cov_nl}}.}
+\item{covariates}{A character vector or a list of single-element character
+vectors. Typically obtained from \code{\link{extract_names}} or
+\code{\link{cov_uni}} or \code{\link{cov_nl}}.}
 
-\item{pattern}{A character vector of regular expression patterns  (e.g., "tmin" matches "tmin", "tmin.l1", etc.).
+\item{pattern}{A character vector of regular expression patterns (e.g.,
+"tmin" matches
+"f(INLA::inla.group(tmin.l1, method='quantile', n=10), model='rw2')").
 Each pattern defines a group to draw covariates from.}
 
-\item{name}{A character vector of exact variable names to include as an additional group.}
+\item{name}{A character vector of exact variable names to include as an
+additional group.}
 
-\item{add}{Logical; if \code{TRUE}, appends the generated combinations to the original \code{covariates} object. Default is \code{FALSE}.}
+\item{add}{Logical; if \code{TRUE}, appends the generated combinations to the
+original \code{covariates} object. Default is \code{FALSE}.}
 }
 \value{
-A list of character vectors. Each element is a unique combination of covariates,
-where one variable is drawn from each specified group. The resulting list is
-suitable as input in the \code{covariates} argument in \code{\link{write_inla_formulas}}.
+A list of character vectors. Each element is a unique combination
+of covariates, where one variable is drawn from each specified group. The
+resulting list is suitable as input in the \code{covariates} argument in
+\code{\link{write_inla_formulas}}.
 }
 \description{
-This function generates all possible combinations of covariates by selecting one
-variable from each user-defined group. Groups can be defined either by a regular expression pattern
-(\code{pattern}) or by exact variable names (\code{name}). The resulting list
-can be input into the \code{covariates} argument in \code{\link{write_inla_formulas}} to
-generate multivariable model formulas where all combinations of covariates are needed.
+This function generates all possible combinations of covariates by selecting
+one variable from each user-defined group. Groups can be defined either by a
+regular expression pattern (\code{pattern}) or by exact variable names (\code{name}).
+The resulting list can be input into the \code{covariates} argument in
+\code{\link{write_inla_formulas}} to generate multivariable model formulas
+where all combinations of covariates are needed.
 }
 \examples{
 data <- data.frame(tmin = rnorm(10), tmin.l1 = rnorm(10),
@@ -44,5 +51,6 @@ cov_multi(covariates = covs, pattern = "tmin", name = "urban")
 
 # Use output as input to write_inla_formulas()
 combined_covs <- cov_multi(covariates = covs, pattern = c("tmin", "pdsi"))
-formulas <- write_inla_formulas(outcome = "cases", covariates = combined_covs)
+formulas <- write_inla_formulas(outcome = "cases",
+                                covariates = combined_covs)
 }

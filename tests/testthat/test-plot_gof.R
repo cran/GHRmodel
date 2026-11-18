@@ -23,7 +23,10 @@ test_that("plot_gof works with dic, mae, rmse, and crps with config = TRUE", {
 })
 
 test_that("plot_gof with CI bars for dic_vs_first", {
-  expect_s3_class(plot_gof(model_t$mod_gof, metric = "dic_vs_first", ci = TRUE), "ggplot")
+  expect_s3_class(
+    plot_gof(model_t$mod_gof, metric = "dic_vs_first", ci = TRUE),
+    "ggplot"
+  )
 })
 
 test_that("plot_gof with color, shape and facet works", {
@@ -41,7 +44,7 @@ test_that("plot_gof with color, shape and facet works", {
 test_that("plot_gof respects custom mod_label vector", {
   ids <- model_t$mod_gof$model_id
   custom_labels <- stats::setNames(paste("Model", seq_along(ids)), ids)
-  
+
   p <- plot_gof(
     mod_gof = model_t$mod_gof,
     metric = "waic",
@@ -49,4 +52,3 @@ test_that("plot_gof respects custom mod_label vector", {
   )
   expect_s3_class(p, "ggplot")
 })
-

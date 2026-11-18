@@ -1,6 +1,6 @@
-#' Import form rlang 
+#' Import form rlang
 #' @name imports_rlang
-#' @importFrom rlang := 
+#' @importFrom rlang :=
 #' @importFrom rlang .data
 #' @noRd
 NULL
@@ -12,14 +12,14 @@ NULL
 NULL
 
 
-#' Import form tidyr 
+#' Import form tidyr
 #' @name imports_tidyr
 #' @importFrom tidyr all_of
 #' @noRd
 NULL
 
-#' Import form dplyr 
+#' Import form dplyr
 #' @name imports_dplyr
-#' @import dplyr 
+#' @import dplyr
 #' @noRd
 NULL

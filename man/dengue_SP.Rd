@@ -5,16 +5,17 @@
 \alias{dengue_SP}
 \title{Dengue cases from the "São Paulo" state of Brazil}
 \format{
-A data frame with 678 rows and 8 columns:
+A data frame with 624 rows and 9 columns:
 \describe{
-\item{\code{date}}{First day of the week, in date format ("\%d-\%m-\%Y")}
-\item{\code{geocode}}{Unique ID code for São Paulo microregion}
+\item{\code{date}}{First day of the week, in date format ("\%Y-\%m-\%d")}
+\item{\code{geocode}}{IBGE municipality code for the city of São Paulo}
 \item{\code{cases}}{Number of notified dengue cases}
-\item{\code{year}}{Year 2000 - 2022}
+\item{\code{year}}{Year 2010 - 2021}
 \item{\code{temp_med}}{Weekly average daily mean temperature}
 \item{\code{precip_tot}}{Weekly cumulative precipitation}
 \item{\code{enso}}{El Niño-Southern Oscillation Index}
 \item{\code{pop}}{Number of inhabitants}
+\item{\code{pop100000}}{Population divided by 100000.}
 }
 }
 \source{
@@ -24,8 +25,8 @@ A data frame with 678 rows and 8 columns:
 dengue_SP
 }
 \description{
-The \code{dengue_SP} example data set reports the weekly number of notified dengue cases in
-the municipality of São Paulo together with climatic covariates. Data was sourced from
-Infodengue (see \code{@source}).
+The \code{dengue_SP} example data set reports the weekly number of notified dengue
+cases in the municipality of São Paulo together with climatic covariates.
+Data was sourced from Infodengue (see source below).
 }
 \keyword{datasets}

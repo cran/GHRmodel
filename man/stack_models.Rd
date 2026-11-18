@@ -12,10 +12,10 @@ stack_models(..., new_name = NULL, vs_first = FALSE)
 \item{new_name}{\code{NULL} (default) \strong{or} a character used to build the new
 model IDs.}
 
-\item{vs_first}{Logical. If TRUE columns comparing the model vs the first model
-are kept in the \code{mod_gof}, otherwise are discarded. Default is FALSE.
-Set to TRUE only when models contained in the \code{GHRmodels} object to be stacked
-are compared with the same first models.}
+\item{vs_first}{Logical. If TRUE columns comparing the model vs the first
+model are kept in the \code{mod_gof}, otherwise are discarded. Default is FALSE.
+Set to TRUE only when models contained in the \code{GHRmodels} object to be
+stacked are compared with the same first models.}
 }
 \value{
 A single \code{GHRmodels} object containing all models from the inputs.
@@ -23,31 +23,38 @@ A single \code{GHRmodels} object containing all models from the inputs.
 \description{
 This function stack together two or more objects \code{GHRmodels} object,
 returning \strong{one} \code{GHRmodels} object that contains \emph{all} the input models.
-
-If \strong{any} \code{model_id} is duplicated across the inputs the \code{new_name} argument must be provided
-to ensure unique IDs.
+All models included in the stack must have the same family, outcome, and
+data.  If \strong{any} \code{model_id} is duplicated across the inputs the \code{new_name}
+argument must be provided to ensure unique IDs.
 }
 \details{
 Combine (Stack) Multiple \strong{GHRmodels} Objects
 }
 \examples{
 \donttest{
-# Load example GHRmodels object from the package: 
-model_list_file <- system.file("examples", "model_list.rds", package = "GHRmodel")
-model_list <- readRDS(model_list_file)
+data(dengue_MS)
+dengue_MS <- dengue_MS[dengue_MS$year \%in\% 2010:2012, ]
 
-# Load example GHRmodels object with DLNM from the package:
-model_dlnm_file <- system.file("examples", "model_dlnm.rds", package = "GHRmodel")
-model_dlnm <- readRDS(model_dlnm_file)
+# Formulas
+formulas1 <- "dengue_cases ~ tmin + f(month, model='rw2')"
+formulas2 <- "dengue_cases ~ tmax + f(month, model='rw2')"
 
-# Merge models from the model_list and model_dlnm objects
-model_stack <- stack_models( 
-  model_list,
-  model_dlnm, 
-  new_name = "mod")
-  
-# The combined model_stack combines the models in the model_list and model_dlnm objects
-model_stack$mod_gof$model_id  
+# Fit
+fitmod1 <- fit_models(
+  formulas = formulas1,
+  data = dengue_MS,
+  family = "nbinomial",
+  offset_var = "pop100000"
+)
+fitmod2 <- fit_models(
+  formulas = formulas2,
+  data = dengue_MS,
+  family = "nbinomial",
+  offset_var = "pop100000"
+)
+
+# Stack
+stacked <- stack_models(fitmod1, fitmod2, new_name = "mod")
 }
 
 

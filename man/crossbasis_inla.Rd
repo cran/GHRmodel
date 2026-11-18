@@ -4,62 +4,64 @@
 \alias{crossbasis_inla}
 \title{Create a Two-Dimensional INLA-compatible Cross-basis Matrix}
 \usage{
-crossbasis_inla(
-  covariate,
-  basis_name,
-  lag,
-  argvar = list(),
-  arglag = list(),
-  ...
-)
+crossbasis_inla(covariate, basis_name, lag, argvar, arglag, ...)
 }
 \arguments{
-\item{covariate}{A numeric matrix of covariate values. Typically this will be a
-matrix of lagged covariate values (which can be generated using \code{\link{lag_cov}}).}
+\item{covariate}{A numeric matrix of covariate values. Typically this will
+be a matrix of lagged covariate values (which can be generated using
+\code{\link{lag_cov}}).}
 
-\item{basis_name}{A character string specifying the prefix for the spline columns
-in the resulting basis matrix (replacing the default \code{"v"}).}
+\item{basis_name}{A character string specifying the prefix for the spline
+columns in the resulting basis matrix (replacing the default \code{"v"}).}
 
-\item{lag}{A numeric vector with min and max lag of the matrix (as in \code{\link[dlnm]{crossbasis}}).}
+\item{lag}{A numeric vector with min and max lag of the matrix (as in
+\code{dlnm::crossbasis}).}
 
 \item{argvar}{A list specifying the shape of the exposure-response function
-(as in \code{\link[dlnm]{crossbasis}}).}
+with named elements (e.g., "fun", "df", "degree", "knots") as in
+\code{dlnm::crossbasis}). See examples.}
 
 \item{arglag}{A list specifying the shape of the lag-response function
-(as in \code{\link[dlnm]{crossbasis}}).}
+with named elements (e.g., "fun", "df", "degree", "knots") as in
+\code{dlnm::crossbasis}). See examples.}
 
-\item{...}{Additional arguments passed to \link[dlnm:crossbasis]{dlnm::crossbasis}, such as
-\code{df}, \code{degree}, \code{knots}, etc.}
+\item{...}{Additional arguments passed to
+\link[dlnm:crossbasis]{dlnm::crossbasis}.}
 }
 \value{
-An object of class \code{"crossbasis_inla"} (also inheriting class \code{"crossbasis"}),
-as returned by \code{dlnm:crossbasis()} but with customized column names.
+An object of class \code{"crossbasis_inla"} (also inheriting class
+\code{"crossbasis"}), as returned by \link[dlnm:crossbasis]{dlnm::crossbasis}
+but with column names prefixed by \code{basis_name} instead of the default
+\code{"v"} (e.g. \code{"v1.l1"} becomes \code{"basis_name1.l1"}).
 }
 \description{
 This function is a wrapper around \link[dlnm:crossbasis]{dlnm::crossbasis}
 to generate cross-basis matrices that
-capture nonlinear effects of a predictor across both exposure and lag dimensions.
-The input covariate is passed as a numeric matrix of lagged values, and the resulting
-columns can be renamed via \code{basis_name} for easier reference in model formulas.
+capture nonlinear effects of a predictor across both exposure and lag
+dimensions. The input covariate is passed as a numeric matrix of
+lagged values, and the resulting columns can be renamed via
+\code{basis_name} for easier reference in model formulas.
 }
 \examples{
 
 # Build cross-basis with a custom prefix for columns
 
-# Import example data set 
+# Import example data set
 data("dengue_MS")
 
-lag_mat <- lag_cov(data = dengue_MS,
+lag_mat <- lag_cov(
+  data = dengue_MS,
   name = c("tmin"),
   time = "date",
   lag = c(1:6),
   group = "micro_code",
-  add = FALSE) # add = FALSE return only the lagged matrix
-  
+  add = FALSE
+)
+
 cb_inla <- crossbasis_inla(
   covariate  = lag_mat,
   basis_name = "tempLag",
-  lag = c(1,6),
+  lag = c(1, 6),
   argvar = list(fun = "bs", df = 3),
   arglag = list(fun = "poly", degree = 2)
 )
@@ -70,4 +72,9 @@ class(cb_inla)
 # View resulting cross-basis matrix
 head(colnames(cb_inla))
 
+}
+\seealso{
+\code{\link{onebasis_inla}} for the one-dimensional equivalent,
+and \code{\link{crosspred_inla}} to compute predictions from a fitted
+cross-basis.
 }

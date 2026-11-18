@@ -20,15 +20,18 @@ write_inla_formulas(
 \arguments{
 \item{outcome}{Character string specifying the name of the outcome variable.}
 
-\item{covariates}{A list of character vectors, where each vector contains covariate names
-to be included in the model. If a single vector is provided, a single model formula is generated.}
+\item{covariates}{A list of character vectors, where each vector contains
+covariate names to be included in the model. If a single vector is provided,
+a single model formula is generated.}
 
-\item{baseline}{Logical; If \code{TRUE}, a baseline formula without covariates is included.
-If no random effects are specified, this will be an intercept-only model.
-If random effects are specified, the baseline formula will include random effects
-but not covariates. This formula will be the first in the list. Default is \code{TRUE}.}
+\item{baseline}{Logical; If \code{TRUE}, a baseline formula without covariates
+is included. If no random effects are specified, this will be an
+intercept-only model. If random effects are specified, the baseline
+formula will include random effects but not covariates. This formula will
+be the first in the list. Default is \code{TRUE}.}
 
-\item{re1}{A list defining a random effect structure. Up to five such lists (\code{re1} through \code{re5}) can be passed.}
+\item{re1}{A list defining a random effect structure. Up to five such
+lists (\code{re1} through \code{re5}) can be passed.}
 
 \item{re2}{Additional random effect definitions, as described for \code{re1}.}
 
@@ -43,43 +46,64 @@ A character vector of INLA model formulas.
 }
 \description{
 This function streamlines the creation of INLA-compatible model formulas
-by automatically structuring fixed effects, random effects, and interactions.
-It accepts a list of covariate sets and produces a corresponding set of model formulas that
-share a common random effect structure.
+by automatically structuring fixed effects, random effects, and
+interactions. It accepts a list of covariate sets and produces a
+corresponding set of model formulas that share a common random
+effect structure.
 }
 \details{
-The \code{write_inla_formulas()} function simplifies the creation of multiple INLA models
-by automatically structuring fixed effects, random effects, and interactions. The function
-ensures that all models have a consistent structure, making them easier to analyze and modify.
+The \code{write_inla_formulas()} function simplifies the creation of multiple
+INLA models by automatically structuring fixed effects, random effects,
+and interactions. The function ensures that all models have a consistent
+structure, making them easier to analyze and modify.
 
 If \code{baseline = TRUE}, a null formula (without covariates) is included as
 the first element of the list.
 
-The number of formulas generated depends on the length of the \code{covariates} list.
+The number of formulas generated depends on the length of the
+\code{covariates} list.
 
-Random effects can be added using \verb{re1, ..., re5}, where each effect must be a named list
+Random effects can be added using \verb{re1, ..., re5}, where each effect
+must be a named list
 (e.g. re1 = list(id    = "year_id", model = "rw1")).
 In the list the following fields are strictly necessary:
 \itemize{
-\item \code{id} \emph{(character)}: the variable name that indexes the random effect (e.g., "year", "region").
-\item \code{model} \emph{(character)}: the type of random effect. Supported values include:
-\code{"iid"}, \code{"rw1"}, \code{"rw2"}, \code{"bym"}, and \code{"bym2"}.
+\item \code{id} \emph{(character)}: the variable name that indexes the random effect
+(e.g., "year", "region").
+\item \code{model} \emph{(character)}: the type of random effect. Supported values
+include: \code{"iid"}, \code{"rw1"}, \code{"rw2"}, \code{"bym"}, and \code{"bym2"}.
 \item The following optional fields can be provided in the random effect list:
 \itemize{
-\item \code{replicate} \emph{(character)}: defines an additional variable used to replicate the random effect structure across groups (e.g., spatial units for repeated time-series).
-\item \code{group} \emph{(character)}: used to model group-specific effects or nested structures.
-\item \code{graph} \emph{(character)}: required for \code{"bym"} and \code{"bym2"} models; refers to the name of an object in the environment that holds the spatial adjacency matrix.
-\item \code{cyclic} \emph{(logical)}: indicates whether the random walk (\code{"rw1"} or \code{"rw2"}) is cyclic. Default is \code{FALSE}. Use for periodic structures (e.g., months).
-\item \code{scale.model} \emph{(logical)}: if \code{TRUE}, scales structured random effects (like \code{rw1}, \code{rw2}, \code{bym}) so the generalized variance is 1. For \code{bym2} INLA automatically
+\item \code{replicate} \emph{(character)}: defines an additional variable used to
+replicate the random effect structure across groups (e.g., spatial
+units for repeated time-series).
+\item \code{group} \emph{(character)}: used to model group-specific effects or
+nested structures.
+\item \code{graph} \emph{(character)}: required for \code{"bym"} and \code{"bym2"} models;
+refers to the name of an object in the environment that holds the
+spatial adjacency matrix.
+\item \code{cyclic} \emph{(logical)}: indicates whether the random walk (\code{"rw1"}
+or \code{"rw2"}) is cyclic. Default is \code{FALSE}. Use for periodic
+structures (e.g., months).
+\item \code{scale.model} \emph{(logical)}: if \code{TRUE}, scales structured random
+effects (like \code{rw1}, \code{rw2}, \code{bym}) so the generalized variance is 1.
+For \code{bym2} INLA automatically
 applies \code{scale.model = TRUE} internally.
-\item \code{constr} \emph{(logical)}: If \code{TRUE}, a sum to zero constrain is introduced. This 'constr' option is applied only to 'iid' random effects.  For \code{rw}, \code{ar}, \code{bym}, \code{bym2} INLA automatically
-applies \code{scale.model = TRUE} internally.
-\item \code{adjust.for.con.comp} \emph{(logical)}: if \code{TRUE}, accounts for disconnected components in spatial graphs. Recommended for \code{"bym"} and \code{"bym2"}. Default is \code{FALSE}.
-\item \code{hyper} \emph{(character)}: the name of an object in the environment that contains the hyperprior specification for the random effect's precision or other parameters.
+\item \code{constr} \emph{(logical)}: If \code{TRUE}, a sum to zero constrain is
+introduced. This 'constr' option is applied only to 'iid' random
+effects.  For \code{rw}, \code{ar}, \code{bym}, \code{bym2} INLA automatically applies
+\code{scale.model = TRUE} internally.
+\item \code{adjust.for.con.comp} \emph{(logical)}: if \code{TRUE}, accounts for
+disconnected components in spatial graphs. Recommended for \code{"bym"}
+and \code{"bym2"}. Default is \code{FALSE}.
+\item \code{hyper} \emph{(character)}: the name of an object in the environment
+that contains the hyperprior specification for the random effect's
+precision or other parameters.
 }
 }
 
-For more information on random effects in R-INLA, see \href{https://becarioprecario.bitbucket.io/inla-gitbook/ch-mixed.html}{Bayesian inference with INLA: Mixed-effects Models}.
+For more information on random effects in R-INLA, see
+\href{https://becarioprecario.bitbucket.io/inla-gitbook/ch-mixed.html}{Bayesian inference with INLA: Mixed-effects Models}.
 }
 \examples{
 
@@ -125,5 +149,6 @@ inla_formulas <- write_inla_formulas(
 )
 }
 \seealso{
-\code{\link{as_GHRformulas}} for transforming model formulas into structured objects.
+\code{\link{as_GHRformulas}} for transforming model formulas into
+structured objects.
 }

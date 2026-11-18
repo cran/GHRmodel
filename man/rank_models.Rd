@@ -9,16 +9,19 @@ rank_models(models, metric = "dic", n = 10)
 \arguments{
 \item{models}{A \code{GHRmodels} object containing fitted model output.}
 
-\item{metric}{A character string indicating which goodness-of-fit metric to use
-for ranking. One of: \code{"dic"}, \code{"waic"},\code{"lms"},\code{"mae"}, \code{"rmse"},\code{"crps"},
-\code{"rsq"},\code{"dic_vs_first"}, \code{"waic_vs_first"}, \code{"mae_vs_first"}, \code{"rmse_vs_first"},
-\code{"crps_vs_first"}, \code{"re_n_var"}, and \code{"re_n_var_change"} (where n is the
-number of random effect, for ex. \code{re_1_var}, \code{re_1_var_change}).}
+\item{metric}{A character string indicating which goodness-of-fit metric to
+use for ranking. One of: \code{"dic"}, \code{"waic"},\code{"lms"},\code{"mae"}, \code{"rmse"},
+\code{"crps"}, \code{"rsq"},\code{"dic_vs_first"}, \code{"waic_vs_first"}, \code{"mae_vs_first"},
+\code{"rmse_vs_first"}, \code{"crps_vs_first"}, \code{"re_n_var"}, and \code{"re_n_var_change"}
+(where n is the number of random effect, for ex. \code{re_1_var},
+\code{re_1_var_change}).}
 
-\item{n}{An integer specifying how many top-ranked models to return (default \code{10}).}
+\item{n}{An integer specifying how many top-ranked models to return
+(default \code{10}).}
 }
 \value{
-A character vector of the top model IDs (in ascending order of the specified \code{metric}).
+A character vector of the top model IDs (in ascending order of the
+specified \code{metric}).
 }
 \description{
 This function ranks fitted models in a \code{GHRmodels} object by a chosen metric
@@ -26,8 +29,9 @@ This function ranks fitted models in a \code{GHRmodels} object by a chosen metri
 }
 \examples{
 \donttest{
-# Load example GHRmodels object from the package: 
-model_list_file <- system.file("examples", "model_list.rds", package = "GHRmodel")
+# Load example GHRmodels object from the package:
+model_list_file <- system.file("examples", "model_list.rds",
+                               package = "GHRmodel")
 model_list <- readRDS(model_list_file)
 
 # Get a list of the 5 best models by DIC

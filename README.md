@@ -1,4 +1,5 @@
-# GHRmodel  <img src='inst/figures/logo_IDExtremes.jpg' align="right" width="18%" /> <span> <span> <img src='inst/figures/logo_BSC.png' align="right" width="16%" /> 
+# GHRmodel <img src='inst/figures/BSC.jpg' align="right" width="20%"/>  <img src='inst/figures/logo_IDExtremes.jpg' align="right" width="20%"/> 
+
 
 <!-- badges: start -->
 [![License](http://img.shields.io/badge/license-GPL%20%28%3E=%202%29-brightgreen.svg?style=flat)](https://www.gnu.org/licenses/old-licenses/gpl-2.0.html)
@@ -7,14 +8,14 @@
 [![CRAN downloads month](https://cranlogs.r-pkg.org/badges/GHRmodel)](https://cran.r-project.org/package=GHRmodel)
 <!-- badges: end -->
 
-<img src='inst/figures/GHRmodel.png' align="right" width="16%" />
+<img src='inst/figures/GHRmodel.jpg' align="right" width="16%" />
 
 ## Overview
 
 The **GHRmodel** package supports modeling health outcomes using Bayesian hierarchical
 spatio-temporal models with complex covariate effects (e.g., linear, non-linear,
 interactions, distributed lag linear and non-linear models) in the
-[R-INLA](https://www.r-inla.org/home) framework.
+[R-INLA](https://www.r-inla.org/) framework.
 It is designed to help users identify key drivers and predictors of disease risk
 by enabling streamlined model exploration, comparison, and visualization of
 complex covariate effects. 
@@ -59,7 +60,17 @@ Instead, it must be installed from its own repository as follows:
 ```
 
 In case you run into any issues, please check the installation
-instructions on the [R-INLA website](https://www.r-inla.org/download-install).
+instructions on the [R-INLA website](https://www.r-inla.org/download/).
+
+
+## Vignettes
+
+Several vignettes are available to explore **GHRmodel**. Vignettes loaded in the package can be accessed in R by typing `vignette("vignettename")` (e.g., `vignette("GHRmodel_overview")`).
+
+The vignettes are:
+- `"GHRmodel_overview"`: a general introduction to the main functionalities of the package, including a worked example.
+- `"GHRmodel_covariates"`: shows how to create INLA-compatible formulas for complex Bayesian spatio-temporal models (including interactions, varying and replicated effects).
+- `"GHRmodel_DLNM"`: demonstrates how Distributed Lag Nonlinear Models (DLNMs) are integrated into the **GHRmodel** spatio-temporal Bayesian hierarchical modelling framework to estimate the delayed and nonlinear effects of various exposures on disease risk.
 
 
 ## Usage
@@ -82,28 +93,15 @@ random effect specification across models that can be interpreted by the functio
 ```R
 library("GHRmodel")
 
-# Convert list of user-defined INLA formulas into a GHRformulas object 
-formulas_user_ghr <- as_GHRformulas(c(
-  
-  # Model 1: random effects only, where monthly random effect is replicated by meso region and the spatial random effect is replicated by year
-    "dengue_cases ~ 1 +
-     f(month_id, model = 'rw1', replicate = spat_meso_id, cyclic = TRUE, constr = TRUE, hyper = prior_t) +
-     f(year_id, model = 'iid', constr = TRUE, hyper = prior_t) +
-     f(spat_id, model = 'bym2', graph = g, constr = TRUE, hyper = prior_sp, replicate = year_id2)",
-    
-  # Model 2: random effects and a varying effect for pdsi lag 1 by climate zone
-  "dengue_cases ~ 1 + f(main_climate_f, pdsi.l1, model = 'iid') +
-     f(month_id, model = 'rw1', replicate = spat_meso_id, cyclic = TRUE, constr = TRUE, hyper = prior_t) +
-     f(year_id, model = 'iid', constr = TRUE, hyper = prior_t) +
-     f(spat_id, model = 'bym2', graph = g, constr = TRUE, hyper = prior_sp, replicate = year_id2)",
+# Load example dataset
+data(dengue_MS)
+dengue_MS <- dengue_MS[dengue_MS$year %in% 2010:2012, ]
 
-  # Model 3: random effects and a 3-way interaction between different pdsi and tmin lags
-  "dengue_cases ~ 1 + pdsi.l1 + tmin.l3 + pdsi.l6 + pdsi.l1:tmin.l3:pdsi.l6 +
-     f(month_id, model = 'rw1', replicate = spat_meso_id, cyclic = TRUE, constr = TRUE, hyper = prior_t) +
-     f(year_id, model = 'iid', constr = TRUE, hyper = prior_t) +
-     f(spat_id, model = 'bym2', graph = g, constr = TRUE, hyper = prior_sp, replicate = year_id2)"
-))
-
+# Declare formulas
+formulas <- c(
+  "dengue_cases ~ tmin +  f(year, model='rw1')",
+  "dengue_cases ~ pdsi +  f(year, model='rw1')"
+)
 ```
 
 The `fit_models()` function allows users to fit a set of INLA-compatible model 
@@ -112,19 +110,14 @@ It automates model fitting, extraction of outputs, and computation of a wide ran
 of goodness-of-fit (GoF) metrics. The output is a `GHRmodels` object. 
 
 ```R
-# User-defined INLA-compatible formulas can be passed into fit_models() as a GHRformulas object
-model_user <- fit_models(
-  formulas = formulas_user_ghr,
-  data = data,
-  family = "nbinomial",           # Negative binomial likelihood
-  name = "mod",                   # Label prefix for each model
-  offset = "population",          # Offset variable to account for population size
-  control_compute = list(
-    config = FALSE,               # Do not posterior predictive distribution
-    vcov = FALSE                  # Do not return variance-covariance matrix
-  ),
-  pb = TRUE,                      # Display progress bar
-  nthreads = 8                    # Use 8 threads for parallel computation
+# Fit multiple models
+results <- fit_models(
+  formulas = formulas,
+  data = dengue_MS,
+  family = "nbinomial",
+  offset_var = "pop100000",
+  nthreads = 2,
+  progress = TRUE
 )
 ```
 
@@ -134,11 +127,10 @@ return graphical `ggplot2` or `cowplot` objects, allowing users to easily
 customize visual outputs. 
 
 ```R
-# Plot any linear coefficients found in the fitted model results. 
 plot_coef_lin(
-  model = model_user,              # Provide fitted model GHRmodels object
-  exp = TRUE,                      # Exponentiate coefficients to relative risk scale
-  title = "Relative Risk (RR)"     # Plot title
+  model = results,          
+  exp = TRUE,                      
+  title = "Relative Risk (RR)"    
 )
 ```
 

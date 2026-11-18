@@ -1,4 +1,3 @@
-
 model_f <- readRDS(testthat::test_path("testdata", "ghr_model_config_f.rds"))
 model_t <- readRDS(testthat::test_path("testdata", "ghr_model_config_t.rds"))
 
@@ -65,7 +64,10 @@ test_that("plot_coef_lin supports var_label with interaction term", {
 # Expected errors
 
 test_that("plot_coef_lin errors if mod_id is invalid", {
-  expect_error(plot_coef_lin(models = model_f, mod_id = "nonexistent"), "not found")
+  expect_error(
+    plot_coef_lin(models = model_f, mod_id = "nonexistent"),
+    "not found"
+  )
 })
 
 test_that("plot_coef_lin give warnings if variable not in model", {
@@ -91,67 +93,78 @@ test_that("plot_coef_lin errors for model with intercept only (mod1)", {
 
 test_that("plot_coef_lin errors with unnamed mod_label", {
   expect_error(
-    plot_coef_lin(models = model_f, mod_id = c("mod2", "mod4"), mod_label = c("A", "B")),
+    plot_coef_lin(
+      models = model_f,
+      mod_id = c("mod2", "mod4"),
+      mod_label = c("A", "B")
+    ),
     "'mod_label' must be a named vector"
   )
 })
 
 
-
 # PLOT_COEF_NL ---------
 
 test_that("plot_coef_nl works with one nonlinear term (config = TRUE)", {
-  p <- plot_coef_nl(models = model_t,
-                    mod_id = "mod3",
-                    name = "tmin.l2")
+  p <- plot_coef_nl(models = model_t, mod_id = "mod3", name = "tmin.l2")
   expect_s3_class(p, "ggplot")
 })
 
 test_that("plot_coef_nl works with multiple models and collapse = TRUE", {
-  p <- plot_coef_nl(models = model_t,
-                    mod_id = c("mod3", "mod6"),
-                    name = c("tmin.l2"),
-                    mod_label = c("mod3" = "Crude", "mod6" = "Adjusted"),
-                    collapse = TRUE)
+  p <- plot_coef_nl(
+    models = model_t,
+    mod_id = c("mod3", "mod6"),
+    name = c("tmin.l2"),
+    mod_label = c("mod3" = "Crude", "mod6" = "Adjusted"),
+    collapse = TRUE
+  )
   expect_s3_class(p, "ggplot")
 })
 
 test_that("plot_coef_nl works with multiple models (collapse = FALSE)", {
-  p <- plot_coef_nl(models = model_t,
-                    mod_id = c("mod3", "mod6"),
-                    name = c("tmin.l2"),
-                    mod_label = c("mod3" = "Crude", "mod6" = "Adjusted"),
-                    collapse = FALSE)
+  p <- plot_coef_nl(
+    models = model_t,
+    mod_id = c("mod3", "mod6"),
+    name = c("tmin.l2"),
+    mod_label = c("mod3" = "Crude", "mod6" = "Adjusted"),
+    collapse = FALSE
+  )
   expect_s3_class(p, "ggplot")
 })
 
 # Filtering by pattern
 
 test_that("plot_coef_nl supports pattern-based selection", {
-  p <- plot_coef_nl(models = model_t,
-                    mod_id = "mod6",
-                    pattern = "tmin",
-                    collapse = FALSE)
+  p <- plot_coef_nl(
+    models = model_t,
+    mod_id = "mod6",
+    pattern = "tmin",
+    collapse = FALSE
+  )
   expect_s3_class(p, "ggplot")
 })
 
 # Faceting, histogram, axis labels
 
 test_that("plot_coef_nl supports title, var_label, xlim", {
-  p <- plot_coef_nl(models = model_t,
-                    mod_id = "mod6",
-                    name = "tmin.l2",
-                    var_label = c("tmin.l2" = "Temperature (lag 1)"),
-                    title = "Nonlinear effect",
-                    xlim = list("tmin.l2" = c(15, 25)))
+  p <- plot_coef_nl(
+    models = model_t,
+    mod_id = "mod6",
+    name = "tmin.l2",
+    var_label = c("tmin.l2" = "Temperature (lag 1)"),
+    title = "Nonlinear effect",
+    xlim = list("tmin.l2" = c(15, 25))
+  )
   expect_s3_class(p, "ggplot")
 })
 
 test_that("plot_coef_nl disables histogram if histogram = FALSE", {
-  p <- plot_coef_nl(models = model_t,
-                    mod_id = "mod6",
-                    name = "tmin.l2",
-                    histogram = TRUE)
+  p <- plot_coef_nl(
+    models = model_t,
+    mod_id = "mod6",
+    name = "tmin.l2",
+    histogram = TRUE
+  )
   expect_s3_class(p, "ggplot")
 })
 
@@ -180,19 +193,19 @@ test_that("plot_coef_nl warns when no nonlinear effects", {
 
 test_that("plot_coef_nl errors if collapse = TRUE and replicated effect", {
   expect_error(
-    plot_coef_nl(models = model_t,
-                 mod_id = c("mod3", "mod4"),
-                 name = "tmin.l2",
-                 collapse = TRUE),
-    "Cannot collapse nonlinear effects of multiple models when one of the effects is replicated"
+    plot_coef_nl(
+      models = model_t,
+      mod_id = c("mod3", "mod4"),
+      name = "tmin.l2",
+      collapse = TRUE
+    ),
+    "Cannot collapse nonlinear effects of multiple models when one "
   )
 })
 
 test_that("plot_coef_nl errors if var is missing in collapse mode", {
   expect_error(
-    plot_coef_nl(models = model_t,
-                 mod_id = c("mod2", "mod5"),
-                 collapse = TRUE),
+    plot_coef_nl(models = model_t, mod_id = c("mod2", "mod5"), collapse = TRUE),
     "'name' must be a single variable name."
   )
 })
@@ -224,7 +237,7 @@ test_that("plot_coef_varying supports var_label mapping (config = TRUE)", {
   # Get levels from data
   ids <- sort(unique(model_t$data$main_climate_f))
   labels <- setNames(paste("Group", ids), ids)
-  
+
   p <- plot_coef_varying(
     models = model_t,
     mod_id = "mod9",
@@ -240,7 +253,11 @@ test_that("plot_coef_varying supports var_label mapping (config = TRUE)", {
 
 test_that("plot_coef_varying errors if mod_id not found", {
   expect_error(
-    plot_coef_varying(models = model_f, mod_id = "modX", name = "main_climate_f"),
+    plot_coef_varying(
+      models = model_f,
+      mod_id = "modX",
+      name = "main_climate_f"
+    ),
     "not found in 'GHRmodels'"
   )
 })
@@ -262,23 +279,26 @@ test_that("plot_coef_varying errors with multiple var inputs", {
 test_that("plot_coef_varying errors with unnamed var_label", {
   lbls <- c("A", "B", "C")
   expect_error(
-    plot_coef_varying(models = model_t,
-                      mod_id = "mod9",
-                      name = "main_climate_f",
-                      unit_label = lbls),
+    plot_coef_varying(
+      models = model_t,
+      mod_id = "mod9",
+      name = "main_climate_f",
+      unit_label = lbls
+    ),
     "'unit_label' must be a named vector"
   )
 })
 
 test_that("plot_coef_varying errors if label missing for IDs", {
   ids <- sort(unique(model_t$data$main_climate_f))
-  bad_lbls <- setNames(paste("Label", ids[-1]), ids[-1])  # omit first ID
+  bad_lbls <- setNames(paste("Label", ids[-1]), ids[-1]) # omit first ID
   expect_error(
-    plot_coef_varying(models = model_t,
-                      mod_id = "mod9",
-                      name = "main_climate_f",
-                      unit_label = bad_lbls),
+    plot_coef_varying(
+      models = model_t,
+      mod_id = "mod9",
+      name = "main_climate_f",
+      unit_label = bad_lbls
+    ),
     "Missing labels for the following IDs: 1"
   )
 })
-

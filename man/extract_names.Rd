@@ -9,7 +9,8 @@ extract_names(data = NULL, pattern = NULL, name = NULL)
 \arguments{
 \item{data}{A \code{data.frame} containing the variables.}
 
-\item{pattern}{A character vector specifying prefix(es) to match (e.g., "tmin" matches "tmin", "tmin.l1", etc.).}
+\item{pattern}{A character vector specifying prefix(es) to match (e.g.,
+"tmin" matches "tmin", "tmin.l1", etc.).}
 
 \item{name}{A character vector of exact variable name(s) to extract.}
 }
@@ -19,8 +20,8 @@ A character vector of matched covariate names.
 \description{
 This function allows the user to select variables from a data set by prefix
 (using the \code{pattern} argument) or by exact name matching.
-The return object is a character vector with the selected covariate names that can be used
-as input for \code{\link{cov_add}}, \code{\link{cov_uni}},
+The return object is a character vector with the selected covariate names
+that can be used as input for \code{\link{cov_add}}, \code{\link{cov_uni}},
 \code{\link{cov_multi}}, \code{\link{cov_interact}}, \code{\link{cov_nl}},
 and \code{\link{cov_varying}} functions.
 }

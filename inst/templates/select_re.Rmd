@@ -1,0 +1,374 @@
+---
+title: "Random effects model selection"
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    toc: true
+    toc_float: 
+      collapsed: false
+    number_sections: true
+    theme: cosmo
+params:
+  results: NULL
+---
+
+<style>
+.main-container {
+  max-width: 1600px !important;
+}
+
+body {
+  margin-left: 20px;
+  margin-right: 20px;
+}
+</style>
+
+```{r setup, include=FALSE}
+# Options
+knitr::opts_chunk$set(echo = FALSE,
+                      fig.align = "center",
+                      fig.width = 10,
+                      fig.height = 5,
+                      out.width = "100%",
+                      warning = FALSE,
+                      message = FALSE)
+options(knitr.kable.NA = "")
+```
+
+```{r prep, include=FALSE}
+# Plot theme shared by the fitted plots
+fit_theme <- ggplot2::theme(
+  axis.text = ggplot2::element_text(size = 7),
+  legend.position = "bottom"
+)
+
+# Objects
+results <- params$results
+unit_var <- results$params$unit
+time_var <- results$params$time
+metrics <- results$params$metric
+
+if (!is.null(unit_var)) {
+  unit_n <- length(unique(results$data[[unit_var]]))
+} else {
+  unit_n <- 0
+}
+```
+
+Two-stage random effect model selection procedure:
+
+- **Best configuration**: Fits, ranks and selects univariable random effect
+models by effect type (spatial, seasonal, interannual) according to
+goodness of fit metrics.
+- **Best combination**: Generates, fits, and ranks multivariable
+combinations of the selected univariable random effects.
+
+The settings used for all models:
+
+```{r, results='asis'}
+p <- results$params
+offset_txt <- if (is.null(p$offset_var)) {
+  "none"
+} else {
+  paste0("`", p$offset_var, "`")
+}
+cat(paste0(
+  "- **Outcome**: `", p$outcome, "`\n",
+  "- **Family**: `", p$family, "`\n",
+  "- **Offset**: ", offset_txt, "\n",
+  "- **Ranking metric(s)**: ",
+  paste(paste0("`", p$metric, "`"), collapse = ", "), "\n"
+))
+```
+
+Please see the documentation of the function `select_re()` for more information.
+
+
+# Best configuration
+
+```{r setup-uni-mods}
+# Prepare univariable results
+uni_gof <- results$re_uni_gof
+spatial_ids <- uni_gof$model_id[uni_gof$effect_group == "spatial"]
+seasonal_ids <- uni_gof$model_id[uni_gof$effect_group == "seasonal"]
+inter_ids <- uni_gof$model_id[uni_gof$effect_group == "interannual"]
+
+# Conditionals
+has_spatial <- length(spatial_ids) > 0
+has_seasonal <- length(seasonal_ids) > 0
+has_inter <- length(inter_ids) > 0
+```
+
+```{r uni-tab}
+# Prepare univariable table
+tab_uni <- uni_gof[
+  c("model_id", "model", "prior", metrics, "final_rank")
+]
+uni_selected <- results$re_uni_selected
+uni_selected <- unlist(sapply(uni_selected, function(x) names(x)))
+tab_uni$selected <- tab_uni$model_id %in% c(uni_selected)
+```
+
+```{r, echo=FALSE, results='asis', eval=has_spatial}
+cat("## Spatial effects{.tabset}\n\n")
+cat("### Model table{.unnumbered}\n\n")
+```
+
+```{r uni-spatial-gof, eval=has_spatial}
+tab_uni_spatial <- tab_uni[uni_gof$model_id %in% spatial_ids, ]
+knitr::kable(tab_uni_spatial, row.names = FALSE)
+```
+
+```{r, echo=FALSE, results='asis', eval=has_spatial}
+cat("### Fitted (selected){.unnumbered}\n\n")
+```
+
+```{r uni-spatial-fit1, eval=has_spatial, fig.height=4+floor(unit_n/4)}
+plot_fit(
+  results$re_uni_mod,
+  mod_id = tab_uni_spatial$model_id[tab_uni_spatial$selected],
+  time = time_var,
+  unit = unit_var,
+  palette = "Set1",
+  transform = "log10p1"
+) +
+  fit_theme
+```
+
+```{r, echo=FALSE, results='asis', eval=has_spatial}
+cat("### Fitted (all){.unnumbered}\n\n")
+```
+
+```{r uni-spatial-fit2, eval=has_spatial, fig.height=4+floor(unit_n/4)}
+plot_fit(
+  results$re_uni_mod,
+  mod_id = spatial_ids,
+  time = time_var,
+  unit = unit_var,
+  palette = "Set1",
+  transform = "log10p1"
+) +
+  fit_theme
+```
+
+```{r, echo=FALSE, results='asis', eval=has_spatial}
+cat("### Effects{.unnumbered}\n\n")
+```
+
+```{r uni-spatial-estimates, eval=has_spatial}
+plot_re(
+  results$re_uni_mod,
+  mod_id = spatial_ids,
+  re_id = "spatial_id",
+  palette = "Set1"
+)
+```
+
+```{r, results='asis', eval=has_seasonal}
+cat("## Seasonal effects{.tabset}\n\n")
+cat("### Model table{.unnumbered}\n\n")
+```
+
+```{r uni-seasonal-gof, eval=has_seasonal}
+tab_uni_seasonal <- tab_uni[uni_gof$model_id %in% seasonal_ids, ]
+knitr::kable(tab_uni_seasonal, row.names = FALSE)
+```
+
+```{r, echo=FALSE, results='asis', eval=has_seasonal}
+cat("### Fitted (selected){.unnumbered}\n\n")
+```
+
+```{r uni-seasonal-fit1, eval=has_seasonal, fig.height=4+floor(unit_n/4)}
+plot_fit(
+  results$re_uni_mod,
+  mod_id = tab_uni_seasonal$model_id[tab_uni_seasonal$selected],
+  time = time_var,
+  unit = unit_var,
+  transform = "log10p1",
+  palette = "Set1"
+) +
+  fit_theme
+```
+
+```{r, echo=FALSE, results='asis', eval=has_seasonal}
+cat("### Fitted (all){.unnumbered}\n\n")
+```
+
+```{r uni-seasonal-fit2, eval=has_seasonal, fig.height=4+floor(unit_n/4)}
+plot_fit(
+  results$re_uni_mod,
+  mod_id = seasonal_ids,
+  time = time_var,
+  unit = unit_var,
+  transform = "log10p1",
+  palette = "Set1"
+) +
+  fit_theme
+```
+
+```{r, echo=FALSE, results='asis', eval=has_seasonal}
+cat("### Effects{.unnumbered}\n\n")
+```
+
+```{r uni-seasonal-estimates, eval=has_seasonal}
+plot_re(
+  results$re_uni_mod,
+  mod_id = seasonal_ids,
+  re_id = "seasonal_id",
+  palette = "Set1"
+)
+```
+
+```{r, results='asis', eval=has_inter}
+cat("## Interannual effects{.tabset}\n\n")
+cat("### Model table{.unnumbered}\n\n")
+```
+
+```{r uni-interannual-gof, eval=has_inter}
+tab_uni_interannual <- tab_uni[uni_gof$model_id %in% inter_ids, ]
+knitr::kable(tab_uni_interannual, row.names = FALSE)
+```
+
+```{r, echo=FALSE, results='asis', eval=has_inter}
+cat("### Fitted (selected){.unnumbered}\n\n")
+```
+
+```{r uni-interannual-fit1, eval=has_inter, fig.height=4+floor(unit_n/4)}
+plot_fit(
+  results$re_uni_mod,
+  mod_id = tab_uni_interannual$model_id[tab_uni_interannual$selected],
+  time = time_var,
+  unit = unit_var,
+  transform = "log10p1",
+  palette = "Set1"
+) +
+  fit_theme
+```
+
+```{r, echo=FALSE, results='asis', eval=has_inter}
+cat("### Fitted (all){.unnumbered}\n\n")
+```
+
+```{r uni-interannual-fit2, eval=has_inter, fig.height=4+floor(unit_n/4)}
+plot_fit(
+  results$re_uni_mod,
+  mod_id = inter_ids,
+  time = time_var,
+  unit = unit_var,
+  transform = "log10p1",
+  palette = "Set1"
+) +
+  fit_theme
+```
+
+```{r, echo=FALSE, results='asis', eval=has_inter}
+cat("### Effects{.unnumbered}\n\n")
+```
+
+```{r uni-interannual-estimates, eval=has_inter}
+plot_re(
+  results$re_uni_mod,
+  mod_id = inter_ids,
+  re_id = "year_id",
+  palette = "Set1"
+)
+```
+
+# Best combination
+
+```{r multi-tab}
+# Prepare multivariable table
+multi_gof <- results$re_multi_gof
+tab_multi <- multi_gof[
+  c("model_id",
+    if (has_spatial) "spatial_id",
+    if (has_seasonal) "seasonal_id",
+    if (has_inter) "interannual_id",
+    metrics,
+    "final_rank")
+]
+multi_selected <- names(results$re_multi_selected)
+tab_multi$selected <- tab_multi$model_id %in% multi_selected
+```
+
+## Summary{.tabset}
+
+### Model table{.unnumbered}
+```{r multi-gof}
+knitr::kable(tab_multi, row.names = FALSE)
+```
+
+### Fitted (selected){.unnumbered}
+```{r multi-fit1, fig.height=4+floor(unit_n/4)}
+plot_fit(
+  results$re_multi_mod,
+  time = time_var,
+  mod_id = tab_multi$model_id[tab_multi$selected],
+  unit = unit_var,
+  transform = "log10p1",
+  palette = "Set1"
+) +
+  fit_theme
+```
+
+### Fitted (all){.unnumbered}
+```{r multi-fit2, fig.height=4+floor(unit_n/4)}
+plot_fit(
+  results$re_multi_mod,
+  time = time_var,
+  unit = unit_var,
+  transform = "log10p1",
+  palette = "Set1"
+) +
+  fit_theme
+```
+
+## Effects{.tabset}
+
+```{r, echo=FALSE, results='asis', eval=has_spatial}
+cat("### Spatial effects{.unnumbered}\n\n")
+```
+
+```{r multi-spatial-estimates, eval=has_spatial}
+spatial_mod_ids <- tab_multi$model_id[!is.na(tab_multi$spatial_id)]
+plot_re(
+  results$re_multi_mod,
+  mod_id = spatial_mod_ids,
+  re_id = "spatial_id",
+  palette = "Set1"
+)
+```
+
+```{r, echo=FALSE, results='asis', eval=has_seasonal}
+cat("### Seasonal effects{.unnumbered}\n\n")
+```
+
+```{r multi-seasonal-estimates, eval=has_seasonal}
+seasonal_mod_ids <- tab_multi$model_id[!is.na(tab_multi$seasonal_id)]
+plot_re(
+  results$re_multi_mod,
+  mod_id = seasonal_mod_ids,
+  re_id = "seasonal_id",
+  palette = "Set1"
+)
+```
+
+```{r, echo=FALSE, results='asis', eval=has_inter}
+cat("### Interannual effects{.unnumbered}\n\n")
+```
+
+```{r multi-interannual-estimates, eval=has_inter}
+inter_mod_ids <- tab_multi$model_id[!is.na(tab_multi$interannual_id)]
+plot_re(
+  results$re_multi_mod,
+  mod_id = inter_mod_ids,
+  re_id = "year_id",
+  palette = "Set1"
+)
+```
+
+# Final model
+
+The model with the best results is the following:
+
+* **Random effects**: `r results$best` 

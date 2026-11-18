@@ -3,25 +3,19 @@
 \docType{data}
 \name{map_MS}
 \alias{map_MS}
-\title{Administrative Map for Municipalities in the Mato Grosso do Sul}
+\title{Administrative boundaries of \emph{Mato Grosso do Sul}}
 \format{
 A simple feature (sf) object including 11 rows and 2 columns:
 \describe{
-\item{\verb{$code}}{Unique ID number for each
-micro region (11 units)}
-\item{\verb{$geometry}}{geometries of the sf multipolygon}
+\item{code}{Unique ID number to each micro region (11 units).}
+\item{geometry}{Geometries of the sf multipolygon.}
 }
-}
-\source{
-\href{https://github.com/drrachellowe/hydromet_dengue}{source code on GitHub};
-\href{https://zenodo.org/records/4632205}{source code on Zenodo};
 }
 \usage{
-map_MS
+data(map_MS)
 }
 \description{
-A simple feature (\code{sf}) multipolygon object representing a map of \emph{Mato Grosso do Sul}, Brazil,
-including 11 municipalities.
-See \code{@source} for access to the complete data set.
+Administrative boundaries (polygon geometries) of the 11 municipalities
+in \emph{Mato Grosso do Sul} (Brazil) to be used with the \code{dengue_MS} data set.
 }
 \keyword{datasets}

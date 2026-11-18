@@ -13,7 +13,7 @@ Useful links:
 \itemize{
   \item \url{https://gitlab.earth.bsc.es/ghr/ghrmodel}
   \item \url{https://bsc-es.github.io/GHRtools/docs/GHRmodel/GHRmodel}
-  \item Report bugs at \url{https://gitlab.earth.bsc.es/ghr/ghrmodel/-/issues}
+  \item Report bugs at \url{https://gitlab.earth.bsc.es/ghr/ghrmodel/-/work_items}
 }
 
 }
@@ -22,8 +22,10 @@ Useful links:
 
 Authors:
 \itemize{
+  \item Carles Milà \email{carles.milagarcia@bsc.es} (\href{https://orcid.org/0000-0003-0470-0760}{ORCID})
   \item Giovenale Moirano (\href{https://orcid.org/0000-0001-8748-3321}{ORCID})
   \item Anna B. Kawiecki (\href{https://orcid.org/0000-0002-0499-2612}{ORCID})
+  \item Diego Villa (\href{https://orcid.org/0000-0001-7832-5890}{ORCID})
   \item Rachel Lowe (\href{https://orcid.org/0000-0003-3939-7343}{ORCID})
 }
 

@@ -6,6 +6,7 @@
 \usage{
 plot_ppd(
   ppd,
+  obs,
   xlab = "Outcome",
   ylab = "Density",
   title = "Posterior Predictive Distribution",
@@ -15,8 +16,11 @@ plot_ppd(
 )
 }
 \arguments{
-\item{ppd}{A \code{data.frame} containing posterior-predictive samples
-(one column per sample) and the column with \code{observed} data.}
+\item{ppd}{A \code{matrix} containing posterior
+predictive samples (one column per sample).}
+
+\item{obs}{A vector of observations, must have the same length as the
+number of columns in \code{ppd}.}
 
 \item{xlab}{Character: x-axis label. Default \code{"Outcome"}.}
 
@@ -30,9 +34,10 @@ x-axis values, e.g. \code{c(0, 25)}.
 If \code{NULL} (default) the limits are
 \code{c(0, quantile(observed, 0.95))}.}
 
-\item{obs_color}{Color for the observed line density}
+\item{obs_color}{Color for the observed line density.}
 
-\item{ppd_color}{Color for the posterior predictive distribution lines density}
+\item{ppd_color}{Color for the posterior predictive distribution line
+density.}
 }
 \value{
 A \pkg{ggplot2} plot object.
@@ -46,35 +51,30 @@ in black.
 \examples{
 \donttest{
 # Load example dataset
-data(dengueMS)
+data(dengue_MS)
+dengue_MS <- dengue_MS[dengue_MS$year \%in\% 2015:2016,]
 
 # Declare formulas
-formulas <- c("dengue_cases ~ tmin +  f(year, model='rw1')")
+formulas <- "dengue_cases ~ tmin + f(year, model='rw1')"
 
 # Tranform formulas into a 'GHRformulas' object
 ghr_formula <- as_GHRformulas(formulas)
 
-# Fit multiple models 
+# Fit multiple models
 results <- fit_models(
   formulas = ghr_formula,
-  data     = dengue_MS[dengue_MS$year \%in\% 2005:2010,],
-  family   = "nbinomial",
-  name     = "model",
-  offset   = "population",
+  data = dengue_MS,
+  family = "nbinomial",
+  name = "model",
+  offset_var = "pop100000",
   nthreads = 2,
-  control_compute = list(config = FALSE),
-  pb       = TRUE
+  control_compute = list(config = TRUE),
+  keep_ppd = TRUE,
+  ppd_samples = 50
 )
 
-# Generate 100 samples from the posterior predictive distribution of the model
-ppd_df <- sample_ppd( 
-  results,
-  mod_id = "model1", 
-  s = 100,
-  nthreads = 2)
-
 # Plot densities of the posterior predictive distribution and observed cases.
-plot_ppd(ppd_df, obs_color = "blue", ppd_color = "red")
+plot_ppd(results$ppd[[1]], obs = dengue_MS$dengue_cases)
 }
 
 }

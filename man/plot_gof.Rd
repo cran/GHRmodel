@@ -14,80 +14,113 @@ plot_gof(
   var_color = NULL,
   var_shape = NULL,
   var_facet = NULL,
-  palette = "IDE2"
+  palette = "IDE2",
+  title = "",
+  xlab = NULL,
+  ylab = NULL,
+  legend = NULL
 )
 }
 \arguments{
-\item{mod_gof}{A data frame containing goodness-of-fit statistics for each model.
-Typically this is the \code{mod_gof} component of a \code{GHRmodels} object. It must include at least
-a \code{model_id} column and the selected \code{metric}. Other columns can be used for aesthetics (e.g., color, shape).}
+\item{mod_gof}{A data frame containing goodness-of-fit statistics for
+each model. Typically this is the \code{mod_gof} component of a
+\code{GHRmodels} object. It must include at least a \code{model_id} column
+and the selected \code{metric}. Other columns can be used for aesthetics
+(e.g., color, shape).}
 
-\item{metric}{Character string specifying the GoF metric to plot. Common options include:
+\item{metric}{Character string specifying the GoF metric to plot. Common
+options include:
 \itemize{
-\item \code{"dic"}, \code{"waic"}, \code{"lms"}, \code{"mae"}, \code{"rmse"}, \code{"crps"}, \code{"rsq"}
-\item Differences from baseline: \code{"dic_vs_first"}, \code{"waic_vs_first"}, \code{"mae_vs_first"}, etc.
-\item Random effect variances: \code{"re_n_var"}, \code{"re_n_var_change"}, where \code{n} is an index.
+\item \code{"dic"}, \code{"waic"}, \code{"lms"}, \code{"mae"},
+\code{"rmse"}, \code{"crps"}, \code{"rsq"}
+\item Differences from baseline: \code{"dic_vs_first"},
+\code{"waic_vs_first"}, \code{"mae_vs_first"}, etc.
+\item Random effect variances: \code{"re_n_var"},
+\code{"re_n_var_change"}, where \code{n} is an index.
 }}
 
-\item{mod_id}{Optional character vector of model IDs to include. If \code{NULL}, includes all in \code{mod_gof}.}
+\item{mod_id}{Optional character vector of model IDs to include. If
+\code{NULL}, includes all in \code{mod_gof}.}
 
-\item{mod_label}{Optional named or unnamed vector to customize display names for models.
-If unnamed, must match the order of \code{mod_id}.}
+\item{mod_label}{Optional named or unnamed vector to customize display
+names for models. If unnamed, must match the order of \code{mod_id}.}
 
-\item{ci}{Logical. If \code{TRUE}, adds credible intervals for \code{"*_vs_first"} metrics (if available).}
+\item{ci}{Logical. If \code{TRUE}, adds credible intervals for
+\code{"*_vs_first"} metrics (if available).}
 
-\item{var_arrange}{Character string for a column name used to order models along the x-axis.
-Defaults to \code{"model_id"} order if \code{NULL}.}
+\item{var_arrange}{Character string for a column name used to order
+models along the x-axis. Defaults to \code{"model_id"} order if \code{NULL}.}
 
-\item{var_color}{Optional; name of a column in \code{mod_gof} to use for color grouping.}
+\item{var_color}{Optional; name of a column in \code{mod_gof} to use
+for color grouping.}
 
-\item{var_shape}{Optional; name of a column in \code{mod_gof} to use for point shape grouping.}
+\item{var_shape}{Optional; name of a column in \code{mod_gof} to use
+for point shape grouping.}
 
-\item{var_facet}{Optional; name of a column in \code{mod_gof} to use for faceting the plot.}
+\item{var_facet}{Optional; name of a column in \code{mod_gof} to use
+for faceting the plot.}
 
-\item{palette}{Character; name of a color palette to use if \code{var_color} is provided.
-Default is \code{"IDE2"}.}
+\item{palette}{Character; name of a color palette to use if
+\code{var_color} is provided. Default is \code{"IDE2"}.}
+
+\item{title}{Character; title of the plot. Default is \code{""} (no title).}
+
+\item{xlab}{Label for the x-axis. If \code{NULL} (default), uses
+\code{"Model ID"}.}
+
+\item{ylab}{Label for the y-axis. If \code{NULL} (default), a label is
+derived automatically from \code{metric}.}
+
+\item{legend}{Legend title for the color and shape legends. If \code{NULL}
+(default), the title is derived automatically from \code{var_color}
+and \code{var_shape}.}
 }
 \value{
-A \code{ggplot2} object showing the specified metric for each model, optionally grouped and faceted.
+A \code{ggplot2} object showing the specified metric for each
+model, optionally grouped and faceted.
 The plot supports:
 \itemize{
 \item Ranking or sorting models by a specified variable
-\item Highlighting credible intervals for relative metrics (e.g. \code{"dic_vs_first"})
+\item Highlighting credible intervals for relative metrics
+(e.g. \code{"dic_vs_first"})
 \item Group-level comparisons via color, shape, and facet aesthetics
 }
 }
 \description{
-Provides visualization of model performance using selected goodness-of-fit (GoF) metrics for one or more models.
-It is typically used with the \code{mod_gof} component of a \code{GHRmodels} object
-(produced by \code{\link{fit_models}}), but it can also accept any custom
+Provides visualization of model performance using selected goodness-of-fit
+(GoF) metrics for one or more models. It is typically used with the
+\code{mod_gof} component of a \code{GHRmodels} object (produced by
+\code{\link{fit_models}}), but it can also accept any custom
 data frame — provided it contains the same column names as the default
 \code{mod_gof} output (including \code{model_id} and the relevant metric column names).
-It supports visual grouping by aesthetics (color, shape, facet), arranging models by metric,
-and adding credible intervals for model differences.
+It supports visual grouping by aesthetics (color, shape, facet), arranging
+models by metric, and adding credible intervals for model differences.
 }
 \details{
 This function helps interpret and visualize comparative model performance:
 \itemize{
-\item Relative metrics (e.g., \code{"*_vs_first"}) assume the first model is a reference.
-\item If \code{ci = TRUE}, the function looks for columns like \code{"dic_vs_first_lci"} and \code{"_uci"}.
-\item The user can customize model order with \code{var_arrange} and legend groupings using \code{var_color}, etc.
+\item Relative metrics (e.g., \code{"*_vs_first"}) assume the first
+model is a reference.
+\item If \code{ci = TRUE}, the function looks for columns like
+\code{"dic_vs_first_lci"} and \code{"_uci"}.
+\item The user can customize model order with \code{var_arrange} and
+legend groupings using \code{var_color}, etc.
 }
 }
 \examples{
 \donttest{
-# Load example GHRmodels object from the package: 
-model_list_file <- system.file("examples", "model_list.rds", package = "GHRmodel")
+# Load example GHRmodels object from the package:
+model_list_file <- system.file("examples", "model_list.rds",
+                               package = "GHRmodel")
 model_list <- readRDS(model_list_file)
 
 # Plot models by difference in DIC
-        
+
 plot_gof(mod_gof = model_list$mod_gof,
         metric = "dic_vs_first",
         ci = TRUE,
         var_arrange = "dic",
-        var_color = "covariate_1",
-        var_shape = "covariate_2",
+        var_color = "model_id",
         palette= "IDE2")
 }
 

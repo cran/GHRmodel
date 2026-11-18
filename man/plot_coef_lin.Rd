@@ -18,19 +18,22 @@ plot_coef_lin(
 )
 }
 \arguments{
-\item{models}{An object of class \code{GHRmodels} containing fitted model output.}
+\item{models}{An object of class \code{GHRmodels} containing fitted model
+output.}
 
-\item{mod_id}{Character vector of model identifiers (must match entries in \code{model$mod_gof$model_id}).
-If \code{NULL} (the default), all models are considered.}
+\item{mod_id}{Character vector of model identifiers (must match entries in
+\code{model$mod_gof$model_id}). If \code{NULL} (the default), all models are
+considered.}
 
-\item{name}{A character vector specifying exact linear covariates names to be plotted.
-If both \code{pattern} and \code{name} are \code{NULL} (the default), all
-terms (except \code{(Intercept)}) are plotted.}
+\item{name}{A character vector specifying exact linear covariates names
+to be plotted. If both \code{pattern} and \code{name} are \code{NULL}
+(the default), all terms (except \code{(Intercept)}) are plotted.}
 
-\item{pattern}{A character vector specifying prefix(es) to match (e.g., "tmin" matches "tmin", "tmin.l1", etc.)
-Covariates matching these patterns (case‐insensitive search) will
-be plotted. If both \code{pattern} and \code{name} are
-\code{NULL} (the default), all terms (except \code{(Intercept)}) are plotted.}
+\item{pattern}{A character vector specifying prefix(es) to match (e.g.,
+"tmin" matches "tmin", "tmin.l1", etc.). Covariates matching these
+patterns (case‐insensitive search) will be plotted. If both
+\code{pattern} and \code{name} are \code{NULL} (the default), all terms
+(except \code{(Intercept)}) are plotted.}
 
 \item{title}{An optional string specifying an overall plot title.}
 
@@ -38,9 +41,10 @@ be plotted. If both \code{pattern} and \code{name} are
 to custom labels, e.g.  c("mod1" = "Model 1"). Any model not found in the
 vector names retains its original label.}
 
-\item{var_label}{An optional named character vector mapping variable (or interaction) names
-to custom labels. Interaction matching is order-insensitive: \code{"A:B"} matches
-\code{"B:A"}. Any term not found in the vector names retains its original label.}
+\item{var_label}{An optional named character vector mapping variable
+(or interaction) names to custom labels. Interaction matching is
+order-insensitive: \code{"A:B"} matches \code{"B:A"}. Any term not found
+in the vector names retains its original label.}
 
 \item{palette}{GHR, RColorBrewer or colorspace palette (e.g. "Purp") colour
 palette to use for the different models. See all available options by running
@@ -48,39 +52,44 @@ palette to use for the different models. See all available options by running
 \code{colorspace::hcl_palettes(plot=TRUE)}. Single R colors in \code{colors()} or hex
 codes can also be used.}
 
-\item{exp}{Logical,if \code{TRUE} the coefficients are exponentiated, Default is if \code{FALSE}.}
+\item{exp}{Logical,if \code{TRUE} the coefficients are exponentiated,
+Default is if \code{FALSE}.}
 
-\item{legend}{Legend title for the replicate color scale. Default is \code{"Model"}.}
+\item{legend}{Legend title for the replicate color scale. Default is
+\code{"Model"}.}
 }
 \value{
 A \pkg{ggplot2} forest plot object (class \code{ggplot}).
 }
 \description{
-This function extracts fixed-effect coefficients from a specified model in \code{models},
-filters them by name or interaction pattern, and produces a forest plot (point estimates
-with error bars).
+This function extracts fixed-effect coefficients from a specified model
+in \code{models}, filters them by name or interaction pattern, and
+produces a forest plot (point estimates with error bars).
 \itemize{
-\item If \code{name = NULL}, all fixed-effect terms (excluding the intercept) are shown.
+\item If \code{name = NULL}, all fixed-effect terms (excluding the intercept)
+are shown.
 \item If \code{name} is a character vector, only the matching terms are included.
 }
 }
 \details{
 \describe{
-\item{Intercept}{By default, \code{(Intercept)} is excluded unless explicitly included in
-\code{name}.}
+\item{Intercept}{By default, \code{(Intercept)} is excluded unless
+explicitly included in \code{name}.}
 \item{Individual terms}{e.g., \code{"temp"}.}
-\item{Interaction Terms}{e.g. \code{"temp:precip"}. Split by \code{:}, sorted,
-and compared setwise; for example, \code{"temp:precip"} matches \code{"precip:temp"}.}
-\item{Labels}{If \code{var_label} is supplied, any matched covariate or interaction
-string is replaced by its custom label on the y-axis.}
+\item{Interaction Terms}{e.g. \code{"temp:precip"}. Split by \code{:},
+sorted, and compared setwise; for example, \code{"temp:precip"} matches
+\code{"precip:temp"}.}
+\item{Labels}{If \code{var_label} is supplied, any matched covariate or
+interaction string is replaced by its custom label on the y-axis.}
 }
 }
 \examples{
-# Load example GHRmodels object from the package: 
-model_list_file <- system.file("examples", "model_list.rds", package = "GHRmodel")
+# Load example GHRmodels object from the package:
+model_list_file <- system.file("examples", "model_list.rds",
+                               package = "GHRmodel")
 model_list <- readRDS(model_list_file)
 
-# Plot point estimates with confidence intervals for the linear covariates: 
+# Plot point estimates with confidence intervals for the linear covariates:
 plot_coef_lin(
 model = model_list,
 mod_id = c("mod2","mod4"),
@@ -90,7 +99,4 @@ title = "Effects of linear covariates"
 )
 
 
-}
-\seealso{
-\code{\link[ggplot2]{geom_pointrange}} for the plotting environment.
 }

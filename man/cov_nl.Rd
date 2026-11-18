@@ -16,41 +16,51 @@ cov_nl(
 )
 }
 \arguments{
-\item{covariates}{A character vector or list of character vectors. Usually from
-\code{\link{cov_multi}} or \code{\link{cov_uni}}.}
+\item{covariates}{A character vector or list of character vectors. Usually
+from \code{\link{cov_multi}} or \code{\link{cov_uni}}.}
 
-\item{pattern}{Character vector of patterns to match covariates for transformation
-(e.g., "tmin" matches "tmin", "tmin.l1", etc.).}
+\item{pattern}{Character vector of patterns to match covariates for
+transformation (e.g., "tmin" matches "tmin", "tmin.l1", etc.).}
 
 \item{name}{Character vector of exact covariate names to transform.}
 
-\item{model}{Character; either \code{"rw1"} or \code{"rw2"} to specify the non-linear INLA model.}
+\item{model}{Character; either \code{"rw1"} or \code{"rw2"} to specify the non-linear
+INLA model.}
 
-\item{method}{Character; either \code{"cut"} or \code{"quantile"} for discretization. Default is \code{"quantile"}.}
+\item{method}{Character; either \code{"cut"} or \code{"quantile"} for discretization.
+Default is \code{"quantile"}.}
 
-\item{n}{Integer; number of intervals or quantile bins. Must be >= 2. Default is 10.}
+\item{n}{Integer; number of intervals or quantile bins. Must be >= 2.
+Default is 10.}
 
-\item{replicate}{Optional character string indicating a replicate structure for non-linear effects.}
+\item{replicate}{Optional character string indicating a replicate structure
+for non-linear effects.}
 
-\item{add}{Logical; if \code{TRUE}, adds the transformed covariates to the original ones. Default is \code{FALSE}.}
+\item{add}{Logical; if \code{TRUE}, adds the transformed covariates to the
+original ones. Default is \code{FALSE}.}
 }
 \value{
-A list of character vectors. This object can be passed to the \code{covariates}
-argument in \code{\link{write_inla_formulas}}.
+A list of character vectors. This object can be passed to the
+\code{covariates} argument in \code{\link{write_inla_formulas}}.
 }
 \description{
-This function transforms selected covariates identified by \code{pattern} or \code{name} into non-linear
-terms using INLA's \code{f()} syntax. It supports random walk models (\code{rw1}, \code{rw2}) and allows discretization
-by quantiles or equal intervals. Transformed covariates are returned as character vectors inside a list
-ready to be passed to the \code{\link{write_inla_formulas}} function.
+This function transforms selected covariates identified by \code{pattern} or
+\code{name} into non-linear terms using INLA's \code{f()} syntax. It supports random
+walk models (\code{rw1}, \code{rw2}) and allows discretization by quantiles or equal
+intervals. Transformed covariates are returned as character vectors inside
+a list ready to be passed to the \code{\link{write_inla_formulas}} function.
 }
 \details{
 \itemize{
 \item Use \code{pattern} or \code{name} (or both) to specify which variables to transform.
-\item The method and n arguments discretize the covariate into evenly populated bins.
-\item The function supports discretization with either equal-width (\code{cut}) or quantile-based (\code{quantile}) bins.
-\item The model argument imposes smoothness on the grouped effect, capturing non-linear trends.
-\item Non-linear effects are created using \code{.single_non_linear_eff_inla()} (internal helper).
+\item The method and n arguments discretize the covariate into evenly populated
+bins.
+\item The function supports discretization with either equal-width (\code{cut}) or
+quantile-based (\code{quantile}) bins.
+\item The model argument imposes smoothness on the grouped effect, capturing
+non-linear trends.
+\item Non-linear effects are created using \code{.single_non_linear_eff_inla()}
+(internal helper).
 }
 }
 \examples{
@@ -62,8 +72,8 @@ covlist <- cov_multi(covs, pattern = c("tmin", "pdsi"))
 # Apply non-linear transformation to tmin variables
 cov_nl(covlist, pattern = "tmin", model = "rw2")
 
-# Include original variables along with transformed ones
-cov_nl(covlist, pattern = "tmin", model = "rw2", add = TRUE)
+# Include original variable along with transformed one
+cov_nl(covlist, name = "pdsi.l1", model = "rw2", add = TRUE)
 }
 \seealso{
 See \href{https://becarioprecario.bitbucket.io/inla-gitbook/ch-smoothing.html}{Bayesian inference with INLA: Smoothing}

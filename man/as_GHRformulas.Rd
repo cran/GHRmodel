@@ -7,35 +7,48 @@
 as_GHRformulas(formulas)
 }
 \arguments{
-\item{formulas}{A character vector of model formulas formatted for R-INLA. Each formula must contain
-a single \code{~} separating the outcome variable from the predictors. Formulas generated with
+\item{formulas}{A character vector of model formulas formatted for R-INLA.
+Each formula must contain a single \code{~} separating the outcome variable from
+the predictors, and its right-hand side must be syntactically valid R code
+(it is parsed internally to identify terms). Formulas generated with
 \code{\link{write_inla_formulas}} are compatible with this function.}
 }
 \value{
-A structured list of class \code{GHRformulas} with the following components:
+A structured list of class \code{GHRformulas} with the components:
 \describe{
-\item{\code{formulas}}{A character vector of the original INLA-compatible model formulas.}
-\item{\code{vars}}{A data frame where each row corresponds to a formula and each column to a covariate.
-Entries indicate whether a covariate is included in the formula.}
-\item{\code{re}}{A character vector listing the random effects specified across all formulas.}
-\item{\code{outcome}}{A character string indicating the outcome variable (must be consistent across formulas).}
+\item{\code{formulas}}{A character vector identical to the input \code{formulas}
+(unmodified, in the same order).}
+\item{\code{vars}}{A data frame where each row corresponds to a formula and
+each column to a covariate slot. Cells hold the covariate
+term present at that position for the given formula, or
+\code{NA} if that formula has fewer terms than the row with
+the most.}
+\item{\code{re}}{A character vector of the random effects specified across
+all formulas (identical across formulas by construction, see
+Details). \code{character(0)} if none are present; otherwise
+named \code{"re_1"}, \code{"re_2"}, ... in the order they were found.}
+\item{\code{outcome}}{A character string indicating the outcome variable (must
+be consistent across formulas).}
 }
 }
 \description{
-This function converts a character vector of suitable R-INLA formulas into a structured \code{GHRformulas} object.
-The \code{GHRformulas} object contains the standardized information about the fixed effects, the random effects, and the outcome variable,
-ensuring consistency across multiple models to be fitted using the \code{\link{fit_models}} function.
+This function converts a character vector of suitable R-INLA formulas into a
+structured \code{GHRformulas} object. The \code{GHRformulas} object contains the
+standardized information about the fixed effects, the random effects, and the
+outcome variable, ensuring consistency across multiple models to be fitted
+using the \code{\link{fit_models}} function.
 }
 \details{
-The \code{as_GHRformulas()} function parses each input formula to extract the outcome variable,
-fixed effects (covariates), and random effects. The resulting \code{GHRformulas} object is designed to be used
-with the \code{\link{fit_models}} function for model fitting with R-INLA.
+The \code{as_GHRformulas()} function parses each input formula to extract the
+outcome variable, fixed effects (covariates), and random effects. The
+resulting \code{GHRformulas} object is designed to be used with the
+\code{\link{fit_models}} function for model fitting with R-INLA.
 }
 \examples{
 # Define formulas
 formulas <- c(
-"dengue_cases ~ 1 + f(month_id, model = 'rw1')", 
-"dengue_cases ~ 1 + f(month_id, model = 'rw1') + tmin.l1") 
+"dengue_cases ~ 1 + f(month_id, model = 'rw1')",
+"dengue_cases ~ 1 + f(month_id, model = 'rw1') + tmin.l1")
 
 # Convert the formulas into a GHRformulas object
 formulas <- as_GHRformulas(formulas)
@@ -46,5 +59,6 @@ print(formulas)
 class(formulas)
 }
 \seealso{
-\code{\link{write_inla_formulas}} to generate R-INLA compatible input formulas
+\code{\link{write_inla_formulas}} to generate R-INLA compatible
+input formulas.
 }

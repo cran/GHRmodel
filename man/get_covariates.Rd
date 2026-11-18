@@ -9,21 +9,24 @@ get_covariates(model, unique = TRUE)
 \arguments{
 \item{model}{A \code{GHRmodels} object containing fitted models.}
 
-\item{unique}{Logical; if \code{TRUE}, returns unique covariates across models.
-If \code{FALSE}, returns vectors of covariate combinations as declared in the \code{GHRmodels} object.}
+\item{unique}{Logical; if \code{TRUE}, returns unique covariates across
+models. If \code{FALSE}, returns vectors of covariate combinations as
+declared in the \code{GHRmodels} object.}
 }
 \value{
 A list of character vectors.
 }
 \description{
-Extracts covariates from a \code{GHRmodels} object and returns them as a list of character vectors.
-If \code{unique = TRUE}, the output contains unique covariates across models. If \code{unique = FALSE},
-the output preserves the original combinations of covariates as specified in the \code{GHRmodels} object.
+Extracts covariates from a \code{GHRmodels} object and returns them as a list of
+character vectors. If \code{unique = TRUE}, the output contains unique covariates
+across models. If \code{unique = FALSE}, the output preserves the original
+combinations of covariates as specified in the \code{GHRmodels} object.
 }
 \examples{
 \donttest{
 # Load example dataset
-data(dengueMS)
+data(dengue_MS)
+dengue_MS <- dengue_MS[dengue_MS$year \%in\% 2015:2016,]
 
 # Declare formulas
 formulas <- c(
@@ -34,19 +37,19 @@ formulas <- c(
 # Tranform formulas into a 'GHRformulas' object
 ghr_formulas <- as_GHRformulas(formulas)
 
-# Fit multiple models 
+# Fit multiple models
 results <- fit_models(
   formulas = ghr_formulas,
-  data     = dengue_MS,
-  family   = "nbinomial",
-  name     = "TestModel",
-  offset   = "population",
+  data = dengue_MS,
+  family = "nbinomial",
+  name = "TestModel",
+  offset_var = "pop100000",
   nthreads = 2,
   control_compute = list(config = FALSE),
-  pb       = TRUE
+  progress = TRUE
 )
 
-# Extract the list of covariates from the models 
+# Extract the list of covariates from the models
 get_covariates(results)
 }
 }

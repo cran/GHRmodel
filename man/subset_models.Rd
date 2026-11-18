@@ -24,29 +24,26 @@ reduced \code{GHRmodels} object.
 }
 \examples{
 \donttest{
-# Load example GHRmodels object from the package: 
-model_list_file <- system.file("examples", "model_list.rds", package = "GHRmodel")
-model_list <- readRDS(model_list_file)
+# Load example dataset
+ data(dengue_MS)
+ dengue_MS <- dengue_MS[dengue_MS$year \%in\% 2010:2012, ]
 
-# Extract a vector with the moded IDs of the 2 best fitting models by WAIC
-best_waic <- rank_models(
-  models = model_list,  # GHRmodels object containing model fit results
-  metric = "waic",      # Metric used to rank models (lower WAIC is better)
-  n = 2                 # Number of top-ranked models to return
-)
+ # Formulas
+ formulas <- c(
+   "dengue_cases ~ tmin + f(month, model='rw2')",
+   "dengue_cases ~ pdsi + f(month, model='rw2')"
+ )
 
-# The output is a vector 
-best_waic
+ # Fit
+ fitmod <- fit_models(
+   formulas = formulas,
+   data = dengue_MS,
+   family = "nbinomial",
+   offset_var = "pop100000"
+ )
 
-# Subset those specific models and assign new IDs
-model_waic <- subset_models(
-  model = model_list,
-  mod_id = best_waic,
-  new_name = "best_waic"
-)
-
-# Check output subset model names
-model_waic$mod_gof$model_id  
+ # Subset a single model
+ sub1 <- subset_models(fitmod, mod_id = "mod1")
 }
 
 }

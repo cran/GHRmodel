@@ -16,22 +16,22 @@ crosspred_inla(
   bylag = 1,
   cen = NULL,
   ci.level = 0.95,
-  cumul = FALSE,
-  ...
+  cumul = FALSE
 )
 }
 \arguments{
-\item{models}{An object of class \code{GHRmodels}, containing fitted model output
-(e.g., \code{$fixed} and \code{$vcov} lists).}
+\item{models}{An object of class \code{GHRmodels}, containing fitted model
+output (e.g., \code{$fixed} and \code{$vcov} lists).}
 
-\item{basis}{A cross-basis or one-basis object, typically created by
+\item{basis}{A cross-basis or one-basis object created by
 \code{\link{crossbasis_inla}} or \code{\link{onebasis_inla}}.}
 
 \item{mod_id}{An integer or character string specifying which model within
-the input \code{GHRmodels} object to use (e.g., if \code{model$fixed} and \code{model$vcov} both
-have multiple entries).}
+the input \code{GHRmodels} object to use (e.g., if \code{model$fixed} and
+\code{model$vcov} both have multiple entries).}
 
-\item{at}{A numeric vector of values at which to compute predictions (e.g.,\code{seq(10,25, by=0.2)})}
+\item{at}{A numeric vector of values at which to compute predictions (e.g.,
+\code{seq(10, 25, by = 0.2)}).}
 
 \item{from, to}{Numeric values specifying the range of the prediction sequence
 if \code{at} is not specified (e.g., \code{from = 10} and \code{to = 25}).}
@@ -39,8 +39,9 @@ if \code{at} is not specified (e.g., \code{from = 10} and \code{to = 25}).}
 \item{by}{Numeric increment for the sequence if \code{at} is not specified
 (e.g., \code{by = 0.2}).}
 
-\item{lag}{A vector of two elements with min and max lag as declared in the
-\code{crossbasis_inla} function.}
+\item{lag}{An optional vector of two elements with min and max lag. If
+missing (default), it uses the same lag structure as defined in
+\code{crossbasis_inla}.}
 
 \item{bylag}{Numeric increment for lag steps (default is 1).}
 
@@ -50,9 +51,6 @@ if \code{at} is not specified (e.g., \code{from = 10} and \code{to = 25}).}
 
 \item{cumul}{Logical; if \code{TRUE}, cumulative predictions are computed
 (default \code{FALSE}).}
-
-\item{...}{Additional arguments passed on to \link[dlnm]{crosspred},
-such as \code{bound}, \code{ci.arg}, etc.}
 }
 \value{
 An object of class \code{"GHRcrosspred"}, inheriting from
@@ -61,40 +59,52 @@ and optionally cumulative predictions, as determined by
 \link[dlnm:crosspred]{crosspred}.
 }
 \description{
-This function takes an object of class \code{GHRmodels}, extracts the relevant
-coefficients and variance-covariance matrix, and then calls
-\link[dlnm:crosspred]{dlnm::crosspred} to compute predictions over a range of covariate
-values (or at specified points).
+This function takes an object of class \code{GHRmodels}, extracts the
+relevant coefficients and variance-covariance matrix, and then calls
+\code{dlnm::crosspred} to compute predictions over a range
+of covariate values (or at specified points).
 }
 \details{
-The function identifies which coefficients in \code{model$fixed[mod_id]} and
-which rows/columns in \code{model$vcov[mod_id]} correspond to the one-basis or
-cross-basis terms (i.e., matching the column names in \code{basis}). Then it passes these
-slices to \link[dlnm:crosspred]{dlnm::crosspred} to generate predictions. The centering
-value (\code{cen}), if specified, indicates the reference exposure (e.g., a mean
-temperature) at which to center the effect estimates (e.g., the effect a given temperature value on the outcome
-will be compared to the effect of the centering value on the outcome,
-in this case the mean temperature).
+The function identifies which coefficients in \code{models$fixed[[mod_id]]}
+and which rows/columns in \code{models$vcov[[mod_id]]} correspond to the
+one-basis or cross-basis terms (i.e., matching the column names in
+\code{basis}).
+
+Then it passes these slices to \code{dlnm::crosspred} to
+generate predictions. The centering value (\code{cen}), if specified,
+indicates the reference exposure (e.g., a mean temperature) at which to
+center the effect estimates (e.g., the effect a given temperature value on
+the outcome will be compared to the effect of the centering value on the
+outcome, in this case the mean temperature).
+
+Credible intervals are not obtained by drawing from the joint posterior of
+the fixed effects. Instead, \code{dlnm::crosspred} combines the posterior
+mean coefficients with the posterior covariance matrix (\code{models$vcov},
+itself INLA's Gaussian approximation to the joint posterior of the fixed
+effects), then builds a symmetric interval as fit \eqn{\pm} a Gaussian
+quantile times the propagated standard error. This is equivalent to a
+posterior-sampling-based interval as long as the joint posterior of the
+fixed effects is itself approximately Gaussian and does not reflect any
+skewness in the individual marginal posteriors.
 }
 \examples{
 # Load example GHRmodels object from the package
-model_dlnm_file <- system.file("examples", "model_dlnm.rds", package = "GHRmodel")
+model_dlnm_file <- system.file("examples", "model_dlnm.rds",
+                               package = "GHRmodel")
 model_dlnm <- readRDS(model_dlnm_file)
 
-# Load example cross-basis matrix from the package: 2-dimensional cross-basis matrix of the 
-# non-linear effect of dengue risk across tmin values and lags: 
-cb_tmin_file <- system.file("examples","cb_tmin.rds", package = "GHRmodel")
-cb_tmin <- readRDS(cb_tmin_file) # loads cross-basis matrix into the environment
+# Load example cross-basis matrix from the package: 2-dimensional
+# cross-basis matrix of the non-linear effect of dengue risk across
+# tmin values and lags:
+cb_tmin_file <- system.file("examples", "cb_tmin.rds", package = "GHRmodel")
+cb_tmin <- readRDS(cb_tmin_file)
 
 # Generate predictions
 pred_result <- crosspred_inla(
-  models    = model_dlnm,
-  basis    = cb_tmin,
+  models = model_dlnm,
+  basis = cb_tmin,
   mod_id = "mod3",
-  at       = seq(17, 24, by = 1),  # e.g., temperature sequence
-  lag      = 2,
-  cen      = 20,
-  ci.level = 0.95
+  cen = 20
 )
 
 # Inspect predictions
@@ -104,5 +114,6 @@ pred_result$alllow   # lower CI
 pred_result$allhigh  # upper CI
 }
 \seealso{
-\link[dlnm:crosspred]{dlnm::crosspred} for details on how predictions are computed.
+\code{dlnm::crosspred} for details on how
+predictions are computed.
 }

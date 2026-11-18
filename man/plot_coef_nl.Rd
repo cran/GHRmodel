@@ -27,79 +27,95 @@ plot_coef_nl(
 \arguments{
 \item{models}{A \code{GHRmodels} object containing fitted model outputs.}
 
-\item{mod_id}{Integer vector specifying which model(s) to plot (as indexed in \code{model$models}).}
+\item{mod_id}{Integer vector specifying which model(s) to plot (as indexed in
+\code{model$models}).}
 
 \item{mod_label}{An optional named character vector mapping model names
 to custom labels, e.g.  c("mod1" = "Model 1"). Any model not found in the
 vector names retains its original label.}
 
-\item{name}{Optional character vector of variable names (as used in \code{inla.group(...)})
-to select specific nonlinear effects. Required for collapse mode.}
+\item{name}{Optional character vector of variable names (as used in
+\code{inla.group(...)}) to select specific nonlinear effects. Required for
+collapse mode.}
 
 \item{pattern}{Optional regular expression pattern to match effect names.
 Used to select nonlinear effects when \code{name} is not provided.}
 
 \item{title}{Optional overall title for the plot.}
 
-\item{var_label}{Optional named character vector providing custom labels for each nonlinear variable.
-Names must match the variable names (e.g., used in \code{inla.group(x)}), not full effect names.}
+\item{var_label}{Optional named character vector providing custom labels for
+each nonlinear variable. Names must match the variable names (e.g., used in
+\code{inla.group(x)}), not full effect names.}
 
-\item{palette}{Name of the color palette to use (passed to \code{GHR_palette}). Default is \code{"IDE2"}.}
+\item{palette}{Name of the color palette to use (passed to
+\code{GHR_palette}). Default is \code{"IDE2"}.}
 
 \item{xlim}{Optional named list specifying x-axis limits for each effect.
-Each element should be a numeric vector of length 2: \code{list(var1 = c(min, max), var2 = c(min, max))}.
+Each element should be a numeric vector of length 2:
+\code{list(var1 = c(min, max), var2 = c(min, max))}.
 Variable names must match those used in \code{inla.group()}.}
 
-\item{ylab}{Optional y-axis label. If \code{NULL}, defaults to \code{"Effect size"}.}
+\item{ylab}{Optional y-axis label. If \code{NULL}, defaults to
+\code{"Effect size"}.}
 
-\item{xlab}{Optional x-axis label. If \code{NULL}, defaults to \code{"<variable> values"}.
+\item{xlab}{Optional x-axis label. If \code{NULL}, defaults to
+\code{"<variable> values"}.
 If explicitly set to \code{NULL}, no x-axis label will be shown.}
 
-\item{histogram}{Logical; if \code{TRUE} (default), includes a histogram below each partial-effect plot.}
+\item{histogram}{Logical; if \code{TRUE} (default), includes a histogram
+below each partial-effect plot.}
 
-\item{legend}{Legend title for the replicate color scale (if multi-replicate effects are present). Default is \code{"Replicate"}.}
+\item{legend}{Legend title for the replicate color scale (if multi-replicate
+effects are present). Default is \code{"Replicate"}.}
 
 \item{hist_fill}{Fill color for histogram bars. Default is \code{"grey"}.}
 
 \item{rug}{Include a rug plot in the x-axis. Default is FALSE.}
 
-\item{collapse}{Logical; if \code{TRUE}, attempts to collapse plots across models to show one plot per variable.
-This requires that selected nonlinear effect is not replicated (i.e. the covariate
+\item{collapse}{Logical; if \code{TRUE}, attempts to collapse plots across
+models to show one plot per variable. This requires that selected nonlinear
+effect is not replicated (i.e. the covariate
 is not in the format f(covariate, model = ..., replicate = group))}
 
-\item{exp}{Logical,if \code{TRUE} the coefficients are exponentiated, Default is if \code{FALSE}.}
+\item{exp}{Logical,if \code{TRUE} the coefficients are exponentiated, Default
+is \code{FALSE}.}
 }
 \value{
-A \code{ggplot} or \code{cowplot} object, depending on the plotting mode.
+A \code{ggplot} or \code{cowplot} object, depending on the plotting
+mode.
 }
 \description{
-Generates plots of nonlinear effects from one or more fitted models contained within a \code{GHRmodels} object.
-The function supports two main display modes:
+Generates plots of nonlinear effects from one or more fitted models contained
+within a \code{GHRmodels} object. The function supports two main display modes:
 \itemize{
-\item Grid (when \code{collapse = FALSE}): one plot per covariate and model, with effects by column and models by row.
+\item Grid (when \code{collapse = FALSE}): one plot per covariate and model, with
+effects by column and models by row.
 \itemize{
-\item If multiple models are specified, the user must provide either \code{name} or \code{pattern}
-to select which nonlinear effects to plot.
-\item If only one model is selected and both \code{name} and \code{pattern} are \code{NULL},
-all nonlinear effects in the model will be plotted.
+\item If multiple models are specified, the user must provide either
+\code{name} or \code{pattern} to select which nonlinear effects to plot.
+\item If only one model is selected and both \code{name} and \code{pattern}
+are \code{NULL}, all nonlinear effects in the model will be plotted.
 }
-\item Collapsed (when \code{collapse = TRUE}): one non-linear effect combined across models into a single panel.
+\item Collapsed (when \code{collapse = TRUE}): one non-linear effect combined across
+models into a single panel.
 \itemize{
-\item The user must explicitly specify the exact variable name using \code{name}.
-It only accepts one covariate name.
-\item Collapse mode can only be used when the selected effect is not replicated
-(that is, does not have the format \verb{f(covariate, model = ..., replicate = group))}
+\item The user must explicitly specify the exact variable name using
+\code{name}. It only accepts one covariate name.
+\item Collapse mode can only be used when the selected effect is not
+replicated (that is, does not have the format
+\verb{f(covariate, model = ..., replicate = group))}.
 If replication is detected, an error will be thrown.
 }
 }
 }
 \examples{
 \donttest{
-# Load example GHRmodels object from the package: 
-model_list_file <- system.file("examples", "model_list.rds", package = "GHRmodel")
+# Load example GHRmodels object from the package:
+model_list_file <- system.file("examples", "model_list.rds",
+                               package = "GHRmodel")
 model_list <- readRDS(model_list_file)
 
-# Plot 2 models with non-linear PDSI at one month lag in collapsed mode: 
+# Plot 2 models with non-linear PDSI at one month lag in collapsed mode:
 plot_coef_nl(
   models = model_list,
   mod_id = c( "mod5", "mod6") ,
@@ -110,7 +126,7 @@ plot_coef_nl(
   title = "Change in PDSI with and without mean min. temp lag 1",
   xlab = "PDSI",
   palette = "IDE2",
-  collapse = TRUE    
+  collapse = TRUE
 )
 }
 
